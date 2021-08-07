@@ -372,14 +372,14 @@ void Setup::build_pmm()
     // = NP/NPTE_PT * sizeof(Page)
     //   NP = size of physical memory in pages
     //   NPTE_PT = number of page table entries per page table, e.g., 256 in this config (12, 8, 12)
-    top_page -= ???;
+    top_page -= MMU::page_tables(MMU::pages(si->bm.mem_top - si->bm.mem_base));
     si->pmm.phy_mem_pts = top_page * sizeof(Page);
 
     // Page tables to map the IO address space
     // = NP/NPTE_PT * sizeof(Page)
     // NP = size of I/O address space in pages
     // NPTE_PT = number of page table entries per page table
-    top_page -= ???;
+    top_page -= MMU::page_tables(MMU::pages(si->bm.mio_top - si->bm.mio_base));
     si->pmm.io_pts = top_page * sizeof(Page);
 
     // Page tables to map the first APPLICATION code segment
@@ -395,12 +395,12 @@ void Setup::build_pmm()
         top_page -= 1;
     si->pmm.sys_info = top_page * sizeof(Page);
 
-    // SYSTEM code segment -- For this test, everything will be in physical memory 
+    // SYSTEM code segment -- For this test, everything will be in physical memory (what?)
     top_page -= ???;
     si->pmm.sys_code = top_page * sizeof(Page);
 
     // SYSTEM data segment
-    top_page -= ???;
+    top_page -= MMU::pages(si->lm.sys_data_size);
     si->pmm.sys_data = top_page * sizeof(Page);
 
     // The memory allocated so far will "disappear" from the system as we set mem_top as follows:
@@ -408,15 +408,15 @@ void Setup::build_pmm()
     si->pmm.usr_mem_top = top_page * sizeof(Page);
 
     // APPLICATION code segment
-    top_page -= ???;
+    top_page -= MMU::pages(si->lm.app_code_size);
     si->pmm.app_code = top_page * sizeof(Page);
 
     // APPLICATION data segment (contains stack, heap and extra)
-    top_page -= ???;
+    top_page -= MMU::pages(si->lm.app_data_size);
     si->pmm.app_data = top_page * sizeof(Page);
 
     // SYSTEM stack segment -- We use boot stack right after sys_pt
-    top_page -= ???;
+    top_page -= MMU::pages(si->lm.sys_stack_size);
     si->pmm.sys_stack = top_page * sizeof(Page);
 
     // Free chunks (passed to MMU::init)
