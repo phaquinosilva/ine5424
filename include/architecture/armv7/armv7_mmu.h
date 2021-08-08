@@ -77,7 +77,7 @@ public:
             else
                 for( ; from < to; from++) {
                     Log_Addr * pte = phy2log(&_entry[from]);
-                    *pte = alloc(1, color) | flags;
+                    *pte = phy2pte(alloc(1, color), flags);
                 }
         }
 
@@ -89,7 +89,7 @@ public:
             addr = align_page(addr);
             for( ; from < to; from++) {
                 Log_Addr * pte = phy2log(&_entry[from]);
-                *pte = addr | flags;
+                *pte = phy2pte(addr, flags);
                 addr += sizeof(Page);
             }
         }
@@ -107,7 +107,7 @@ public:
             int brk = 0;
             for(unsigned int i = 0; i < PT_ENTRIES; i++)
                 if(pt[i]) {
-                    os << "[" << i << "]=" << pt[i] << "  ";
+                    os << "[" << i << "]=" << pte2phy(pt[i]) << "  ";
                     if(!(++brk % 4))
                         os << "\n";
                 }
@@ -229,7 +229,7 @@ public:
 
         void detach(const Chunk & chunk) {
             for(unsigned int i = 0; i < PD_ENTRIES; i++) {
-                if(indexes((*_pd)[i]) == indexes(chunk.pt())) {
+                if(indexes(pte2phy((*_pd)[i])) == indexes(chunk.pt())) {
                     detach(i, chunk.pt(), chunk.pts());
                     return;
                 }
@@ -239,7 +239,7 @@ public:
 
         void detach(const Chunk & chunk, Log_Addr addr) {
             unsigned int from = directory(addr);
-            if(indexes((*_pd)[from]) != indexes(chunk.pt())) {
+            if(indexes(pte2phy((*_pd)[from])) != indexes(chunk.pt())) {
                 db<MMU>(WRN) << "MMU::Directory::detach(pt=" << chunk.pt() << ",addr=" << addr << ") failed!" << endl;
                 return;
             }
@@ -248,7 +248,7 @@ public:
 
         Phy_Addr physical(Log_Addr addr) {
             PD_Entry pde = (*_pd)[directory(addr)];
-            Page_Table * pt = static_cast<Page_Table *>(pde);
+            Page_Table * pt = static_cast<Page_Table *>(pde2phy(pde));
             PT_Entry pte = (*pt)[page(addr)];
             return pte | offset(addr);
         }
@@ -259,7 +259,7 @@ public:
                 if((*_pd)[i])
                     return false;
             for(unsigned int i = from; i < from + n; i++, pt++)
-                (*_pd)[i] = Phy_Addr(pt) | flags;
+                (*_pd)[i] = phy2pde(Phy_Addr(pt));
             return true;
         }
 
@@ -276,9 +276,10 @@ public:
     // DMA_Buffer -- assume MMU has complete memory control, does not provide DMA
     class DMA_Buffer;
 
+
     // Class Translation performs manual logical to physical address translations for debugging purposes only
     class Translation;
-    
+
 public:
     ARMv7_MMU() {}
 
@@ -337,20 +338,28 @@ public:
 
     static Page_Directory * volatile current() { return reinterpret_cast<Page_Directory * volatile>(CPU::pdp()); }
 
-    static Phy_Addr physical(Log_Addr addr);
-    static PT_Entry phy2pte(Phy_Addr frame, Page_Flags flags);
-    static Phy_Addr pte2phy(PT_Entry entry);
-    static PD_Entry phy2pde(Phy_Addr frame);
-    static Phy_Addr pde2phy(PD_Entry entry);
+    static Phy_Addr physical(Log_Addr addr) {
+        Page_Directory * pd = current();
+        Page_Table * pt = (*pd)[directory(addr)];
+        return (*pt)[page(addr)] | offset(addr);
+    }
 
-    static void flush_tlb();
-    static void flush_tlb(Log_Addr addr);
+    static PT_Entry phy2pte(Phy_Addr frame, Page_Flags flags) { return (frame >> 2) | flags; }
+    static Phy_Addr pte2phy(PT_Entry entry) { return (entry & ~Page_Flags::MASK) << 2; }
+    static PD_Entry phy2pde(Phy_Addr frame) { return (frame >> 2) | Page_Flags::V; }
+    static Phy_Addr pde2phy(PD_Entry entry) { return (entry & ~Page_Flags::MASK) << 2; }
+
+    static void flush_tlb() {
+        //TODO
+    }
+    static void flush_tlb(Log_Addr addr) {
+        //TODO
+    }
 
     static Log_Addr phy2log(Phy_Addr phy) { return Log_Addr((MEM_BASE == PHY_MEM) ? phy : (MEM_BASE > PHY_MEM) ? phy - (MEM_BASE - PHY_MEM) : phy + (PHY_MEM - MEM_BASE)); }
     static Phy_Addr log2phy(Log_Addr log) { return Phy_Addr((MEM_BASE == PHY_MEM) ? log : (MEM_BASE > PHY_MEM) ? log + (MEM_BASE - PHY_MEM) : log - (PHY_MEM - MEM_BASE)); }
 
     static Color phy2color(Phy_Addr phy) { return WHITE; };
-
     static Color log2color(Log_Addr log) { return WHITE; };
 
 private:
