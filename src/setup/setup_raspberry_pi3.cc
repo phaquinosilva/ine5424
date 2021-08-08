@@ -395,7 +395,7 @@ void Setup::build_pmm()
         top_page -= 1;
     si->pmm.sys_info = top_page * sizeof(Page);
 
-    // SYSTEM code segment -- For this test, everything will be in physical memory (what?)
+    // SYSTEM code segment
     top_page -= MMU::pages(si->lm.sys_code_size);
     si->pmm.sys_code = top_page * sizeof(Page);
 
@@ -505,52 +505,29 @@ void Setup::setup_sys_pt()
     PT_Entry * sys_pt = reinterpret_cast<PT_Entry *>(si->pmm.sys_pt);
 
     // Clear the System Page Table
-    memset(sys_pt, 0, 2*sizeof(Page));
+    memset(sys_pt, 0, sizeof(Page));
 
-    // TODO: System Info (nao encontrei em setup_legacy_pc)
+    // System Info
+    sys_pt[MMU::page(SYS_INFO)] = MMU::phy2pte(si->pmm.sys_info, Flags::SYS);
 
-    // Set an entry to this page table, so the system can access it later -- ??? pages for entries
-    // TODO: nao estamos definindo aqui o tamanho das paginas, checar se algo as define
-    sys_pt[MMU::page(SYS_PT)] = si->pmm.sys_pt | Flags::SYS;
+    // Set an entry to this page table, so the system can access it later
+    sys_pt[MMU::page(SYS_PT)] = MMU::phy2pte(si->pmm.sys_pt, Flags::SYS);
 
-    // System Page Directory -- ??? Pages for directory
-    // TODO: nao estamos definindo aqui o tamanho das paginas, checar se algo as define
-    sys_pt[MMU::page(SYS_PD)] = si->pmm.sys_pd | Flags::SYS;
-
-    // // SYSTEM code
-    // configure_page_table_descriptors(???);
-
-    // // SYSTEM data
-    // configure_page_table_descriptors(???);
-
-    // // SYSTEM stack (used only during init and for the ukernel model)
-    // configure_page_table_descriptors(???);
-
-    // TODO: remover comentarios ou realmente criar essas funções.
-    //       criar as funções parece idiota porque existem argumentos demais?
-    // - pmm.sys_code
-    // - lm.sys_code_size
-    // - SYS_CODE
+    // System Page Directory
+    sys_pt[MMU::page(SYS_PD)] = MMU::phy2pte(si->pmm.sys_pd, Flags::SYS);
 
     // SYSTEM code
-    // TODO: checar com sifive.
-    for(i = 0, aux = si->pmm.sys_code; i < MMU::pages(si->lm.sys_code_size); i++, aux = aux + sizeof(Page))
-        sys_pt[MMU::page(SYS_CODE) + i] = aux | Flags::SYS;
+    configure_page_table_descriptors(sys_pt, si->pmm.sys_code, si->lm.sys_code_size, MMU::pages(si->lm.sys_code_size), Flags::SYS);
 
     // SYSTEM data
-    // TODO: checar com sifive.
-    for(i = 0, aux = si->pmm.sys_data; i < MMU::pages(si->lm.sys_data_size); i++, aux = aux + sizeof(Page))
-        sys_pt[MMU::page(SYS_DATA) + i] = aux | Flags::SYS;
+    configure_page_table_descriptors(sys_pt, si->pmm.sys_data, si->lm.sys_data_size, MMU::pages(si->lm.sys_data_size), Flags::SYS);
 
     // SYSTEM stack (used only during init and for the ukernel model)
-    // TODO: checar com sifive.
-    for(i = 0, aux = si->pmm.sys_stack; i < MMU::pages(si->lm.sys_stack_size); i++, aux = aux + sizeof(Page))
-        sys_pt[MMU::page(SYS_STACK) + i] = aux | Flags::SYS;
+    configure_page_table_descriptors(sys_pt, si->pmm.sys_stack, si->lm.sys_stack_size, MMU::pages(si->lm.sys_stack_size), Flags::SYS);
 
     db<Setup>(TRC) << "SYS_PT=" << *reinterpret_cast<Page_Table *>(sys_pt) << endl;
 }
 
-// TODO: nao existe no riscv ao menos
 void Setup::setup_app_pt()
 {
     db<Setup>(TRC) << "Setup::setup_app_pt(appc={b=" << (void *)si->pmm.app_code << ",s=" << MMU::pages(si->lm.app_code_size) << "}"
@@ -567,10 +544,10 @@ void Setup::setup_app_pt()
     memset(app_data_pt, 0, MMU::page_tables(MMU::pages(si->lm.app_data_size)) * sizeof(Page));
 
     // APPLICATION code
-    // configure_page_table_descriptors(???);
+    configure_page_table_descriptors(app_code_pt, si->pmm.app_code, si->lm.app_code_size, MMU::pages(si->lm.app_code_size), Flags::APP);
 
     // APPLICATION data (contains stack, heap and extra)
-    // configure_page_table_descriptors(???);
+    configure_page_table_descriptors(app_code_pt, si->pmm.app_data, si->lm.app_data_size, MMU::pages(si->lm.app_data_size), Flags::APP);
 
     db<Setup>(INF) << "APPC_PT=" << *reinterpret_cast<Page_Table *>(app_code_pt) << endl;
     db<Setup>(INF) << "APPD_PT=" << *reinterpret_cast<Page_Table *>(app_data_pt) << endl;
@@ -608,68 +585,48 @@ void Setup::setup_sys_pd()
     memset(sys_pd, 0, sizeof(Page));
 
     // Calculate the number of page tables needed to map the physical memory
-    // TODO: checar se existe na nossa MMU.
-    int n_pts = MMU::page_tables(mem_size);
- 
+    unsigned int mem_size = MMU::pages(si->bm.mem_top - si->bm.mem_base);
+    unsigned int n_pts = MMU::page_tables(mem_size);
+
     // Map the whole physical memory into the page tables pointed by phy_mem_pts
     PT_Entry * pts = reinterpret_cast<PT_Entry *>(si->pmm.phy_mem_pts);
-    // TODO: checar com sifive.
-    for(unsigned int i = MMU::pages(si->bm.mem_base); i < mem_size; i++)
-        pts[i] = (i * sizeof(Page)) | Flags::APP;
-
-    // configure_page_table_descriptors(???);
-
-    // TODO: nao tem uma ação que rola no legacy_pc: Attach all physical memory starting at PHY_MEM
+    configure_page_table_descriptors(pts, si->bm.mem_base, mem_size, n_pts, Flags::SYS)
 
     // Attach the portion of the physical memory used by Setup at SETUP
-
+    sys_pd[MMU::directory(SETUP)] =  MMU::phy2pde(si->pmm.phy_mem_pts);
 
     // Attach all physical memory starting at MEM_BASE
+    assert((MMU::directory(MMU::align_directory(MEM_BASE)) + n_pts) < (MMU::PD_ENTRIES - 4)); // check if it would overwrite the OS
+    for(unsigned int i = MMU::directory(MMU::align_directory(MEM_BASE)), j = 0; i < MMU::directory(MMU::align_directory(MEM_BASE)) + n_pts; i++, j++)
+        sys_pd[i] = MMU::phy2pde((si->pmm.phy_mem_pts + j * sizeof(Page)));
 
     // Calculate the number of page tables needed to map the IO address space
-    // TODO: checar com sifive.
     unsigned int io_size = MMU::pages(si->bm.mio_top - si->bm.mio_base);
-    io_size += APIC_SIZE / sizeof(Page); // Add room for APIC (4 (???) kB, 1 (???) page)
-    io_size += VGA_SIZE / sizeof(Page); // Add room for VGA (64 (???) kB, 16 (???) pages)
     n_pts = MMU::page_tables(io_size);
 
     // Map IO address space into the page tables pointed by io_pts
-    // TODO: checar com sifive
     pts = reinterpret_cast<PT_Entry *>(si->pmm.io_pts);
-    // configure_page_table_descriptors(???);
-    unsigned int i = 0;
-    for(; i < (APIC_SIZE / sizeof(Page)); i++)
-        pts[i] = (APIC_PHY + i * sizeof(Page)) | Flags::APIC;
-    for(unsigned int j = 0; i < ((APIC_SIZE / sizeof(Page)) + (IO_APIC_SIZE / sizeof(Page))); i++, j++)
-        pts[i] = (IO_APIC_PHY + j * sizeof(Page)) | Flags::APIC;
-    for(unsigned int j = 0; i < ((APIC_SIZE / sizeof(Page)) + (IO_APIC_SIZE / sizeof(Page)) + (VGA_SIZE / sizeof(Page))); i++, j++)
-        pts[i] = (VGA_PHY + j * sizeof(Page)) | Flags::VGA;
-    for(unsigned int j = 0; i < io_size; i++, j++)
-        pts[i] = (si->bm.mio_base + j * sizeof(Page)) | Flags::PCI;
+    configure_page_table_descriptors(pts, si->bm.mio_base, io_size, n_pts, Flags::SYS)
 
     // Attach devices' memory at Memory_Map::IO
-    // TODO: checar com sifive 
-    // Embaixo de todos os TODO eu provavelmente deveria ver se eu tenho acesso a todas
-    //  as funções que eu tento usar... 
     assert((MMU::directory(MMU::align_directory(IO)) + n_pts) < (MMU::PD_ENTRIES - 3)); // check if it would overwrite the OS
     for(unsigned int i = MMU::directory(MMU::align_directory(IO)), j = 0; i < MMU::directory(MMU::align_directory(IO)) + n_pts; i++, j++)
-        sys_pd[i] = (si->pmm.io_pts + j * sizeof(Page)) | Flags::PCI;
+        sys_pd[i] = MMU::phy2pde((si->pmm.io_pts + j * sizeof(Page)));
 
     // Attach the OS (i.e. sys_pt)
-    // TODO: checar com sifive
-    sys_pd[MMU::directory(SYS)] = si->pmm.sys_pt | Flags::SYS;
-
-    // TODO: aqui tinha uma operação no legacy que aqui nao tem: // Attach memory starting at MEM_BASE
+    sys_pd[MMU::directory(SYS)] = MMU::phy2pde(si->pmm.sys_pt);
 
     // Attach the first APPLICATION CODE (i.e. app_code_pt)
-    // TODO: vou chutar que eh isso que eh pra fazer, ai tem que acertar os boundaries de execucao
-    // for(unsigned int i = MMU::directory(MMU::align_directory(IO)), j = 0; i < MMU::directory(MMU::align_directory(IO)) + n_pts; i++, j++)
-    //     sys_pd[i] = (si->pmm.io_pts + j * sizeof(Page)) | Flags::PCI;
+    n_pts = MMU::page_tables(MMU::pages(si->lm.app_code_size));
+    for(unsigned int i = MMU::directory(MMU::align_directory(si->lm.app_code)), j = 0; i < MMU::directory(MMU::align_directory(si->lm.app_code)) + n_pts; i++, j++)
+        sys_pd[i] = MMU::phy2pde(si->pmm.app_code_pts + j * sizeof(Page));
 
     // Attach the first APPLICATION DATA (i.e. app_data_pt, containing heap, stack and extra)
-    // TODO: vou chutar que eh isso que eh pra fazer, ai tem que acertar os boundaries de execucao
-    // for(unsigned int i = MMU::directory(MMU::align_directory(IO)), j = 0; i < MMU::directory(MMU::align_directory(IO)) + n_pts; i++, j++)
-    //     sys_pd[i] = (si->pmm.io_pts + j * sizeof(Page)) | Flags::PCI;
+    n_pts = MMU::page_tables(MMU::pages(si->lm.app_data_size));
+    for(unsigned int i = MMU::directory(MMU::align_directory(si->lm.app_data)), j = 0; i < MMU::directory(MMU::align_directory(si->lm.app_data)) + n_pts; i++, j++)
+        sys_pd[i] = MMU::phy2pde(si->pmm.app_data_pts + j * sizeof(Page));
+
+    db<Setup>(TRC) << "SYS_PD=" << *reinterpret_cast<Page_Table *>(sys_pd) << endl;
 }
 
 void Setup::enable_paging()
