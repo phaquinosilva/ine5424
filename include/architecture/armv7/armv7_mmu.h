@@ -241,32 +241,7 @@ public:
     };
 
     // DMA_Buffer
-    class DMA_Buffer: public Chunk
-    {
-    public:
-        DMA_Buffer(unsigned int s) : Chunk(s, Page_Flags::DMA) {
-            Directory dir(current());
-            _log_addr = dir.attach(*this, MMU::directory(PHY_MEM));
-            db<MMU>(TRC) << "MMU::DMA_Buffer() => " << *this << endl;
-        }
-
-        DMA_Buffer(unsigned int s, Log_Addr d): Chunk(s, Page_Flags::DMA) {
-            Directory dir(current());
-            _log_addr = dir.attach(*this);
-            memcpy(_log_addr, d, s);
-            db<MMU>(TRC) << "MMU::DMA_Buffer(phy=" << *this << " <= " << d << endl;
-        }
-
-        Log_Addr log_address() const { return _log_addr; }
-
-        friend OStream & operator<<(OStream & os, const DMA_Buffer & b) {
-            os << "{phy=" << b.phy_address() << ",log=" << b.log_address() << ",size=" << b.size() << ",flags=" << b.flags() << "}";
-            return os;
-        }
-
-    private:
-        Log_Addr _log_addr;
-    };
+    class DMA_Buffer: public Chunk;
 
     // Class Translation performs manual logical to physical address translations for debugging purposes only
     class Translation;
