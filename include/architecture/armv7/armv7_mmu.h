@@ -23,7 +23,40 @@ private:
 
 public:
     // Page Flags -- ARM specific
-    class Page_Flags;
+    class Page_Flags
+    {
+    public:
+        enum {
+              = 1 << 0, // Present
+               = 1 << 1, // Readable
+               = 1 << 2, // Writable
+               = 1 << 3, // Executable
+              = 1 << 4, // Access Control (0=supervisor, 1=user)
+               = 1 << 5, // Cache disable (0=cacheable, 1=non-cacheable)
+              = 1 << 6, // Cache mode (0=write-back, 1=write-through)
+               = 1 << 7, // Contiguous (0=non-contiguous, 1=contiguous)
+               = 1 << 8, // Memory Mapped I/O (0=memory, 1=I/O)
+        }
+    public:
+        Page_Flags() {}
+        Page_Flags(unsigned int f) : _flags(f) {}
+        Page_Flags(Flags f) : _flags(V |
+                                     ((f & Flags::RD)  ? R  : 0) |
+                                     ((f & Flags::RW)  ? W  : 0) |
+                                     ((f & Flags::EX)  ? X  : 0) |
+                                     ((f & Flags::USR) ? U  : 0) |
+                                     ((f & Flags::CWT) ? 0  : 0) |
+                                     ((f & Flags::CD)  ? 0  : 0) |
+                                     ((f & Flags::CT)  ? CT : 0) |
+                                     ((f & Flags::IO)  ? IO : 0) ) {}
+
+        operator unsigned int() const { return _flags; }
+
+        friend Debug & operator<<(Debug & db, const Page_Flags & f) { db << hex << f._flags; return db; }
+
+    private:
+        unsigned int _flags;
+    };;
 
     /* The rest seem to be the same for the other architecures,
     so I'll assume the same applies here */
