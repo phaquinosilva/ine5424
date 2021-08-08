@@ -269,30 +269,8 @@ public:
     };
 
     // Class Translation performs manual logical to physical address translations for debugging purposes only
-    class Translation
-    {
-    public:
-        Translation(Log_Addr addr, bool pt = false, Page_Directory * pd = 0): _addr(addr), _show_pt(pt), _pd(pd) {}
-
-        friend OStream & operator<<(OStream & os, const Translation & t) {
-            Page_Directory * pd = t._pd ? t._pd : current();
-            PD_Entry pde = (*pd)[directory(t._addr)];
-            Page_Table * pt = static_cast<Page_Table *>(pde);
-            PT_Entry pte = (*pt)[page(t._addr)];
-
-            os << "{addr=" << static_cast<void *>(t._addr) << ",pd=" << pd << ",pd[" << directory(t._addr) << "]=" << pde << ",pt=" << pt;
-            if(t._show_pt)
-                os << "=>" << *pt;
-            os << ",pt[" << page(t._addr) << "]=f=" << pte << ",*addr=" << hex << *static_cast<unsigned int *>(t._addr) << "}";
-            return os;
-        }
-
-    private:
-        Log_Addr _addr;
-        bool _show_pt;
-        Page_Directory * _pd;
-    };
-
+    class Translation;
+    
 public:
     ARMv7_MMU() {}
 

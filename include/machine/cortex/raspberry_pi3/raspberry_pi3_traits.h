@@ -35,10 +35,10 @@ template<> struct Traits<Machine>: public Traits<Machine_Common>
     static const unsigned int BOOT_STACK        = 0x3eeefffc;   // MEM_TOP - sizeof(int) - 1M for boot stacks
 
     // Logical Memory Map
-    static const unsigned int BOOT              = NOT_USED;
-    static const unsigned int IMAGE             = NOT_USED;
-    static const unsigned int SETUP             = NOT_USED;
-    static const unsigned int INIT              = NOT_USED;
+    static const unsigned int BOOT              = 0x00000000;
+    static const unsigned int IMAGE             = 0x00080000;
+    static const unsigned int SETUP             = 0x00100000;
+    static const unsigned int INIT              = 0x00180000;
 
     static const unsigned int APP_LOW           = MEM_BASE;
     static const unsigned int APP_CODE          = VECTOR_TABLE;

@@ -365,7 +365,7 @@ void Setup::build_pmm()
     si->pmm.sys_pd = top_page * sizeof(Page);
 
     // Page tables to map the System address space
-    top_page -= ???;
+    top_page -= 4;
     si->pmm.sys_pt = top_page * sizeof(Page);
 
     // Page tables to map the whole physical memory
@@ -383,11 +383,11 @@ void Setup::build_pmm()
     si->pmm.io_pts = top_page * sizeof(Page);
 
     // Page tables to map the first APPLICATION code segment
-    top_page -= ???;
+    top_page -= 4;
     si->pmm.app_code_pts = top_page * sizeof(Page);
 
     // Page tables to map the first APPLICATION data segment (which contains heap, stack and extra)
-    top_page -= ???;
+    top_page -= 4;
     si->pmm.app_data_pts = top_page * sizeof(Page);
 
     // System Info (1 x sizeof(Page))
@@ -396,7 +396,7 @@ void Setup::build_pmm()
     si->pmm.sys_info = top_page * sizeof(Page);
 
     // SYSTEM code segment -- For this test, everything will be in physical memory (what?)
-    top_page -= ???;
+    top_page -= MMU::pages(si->lm.sys_code_size);
     si->pmm.sys_code = top_page * sizeof(Page);
 
     // SYSTEM data segment
@@ -420,7 +420,7 @@ void Setup::build_pmm()
     si->pmm.sys_stack = top_page * sizeof(Page);
 
     // Free chunks (passed to MMU::init)
-    si->pmm.free1_base = ???; // vector table should not be deleted!
+    si->pmm.free1_base = si->bm.mem_base; // vector table should not be deleted!
     si->pmm.free1_top = top_page * sizeof(Page); // we will free the stack here
     db<Setup>(TRC) << "Top page = " << top_page << endl;
 
@@ -567,10 +567,10 @@ void Setup::setup_app_pt()
     memset(app_data_pt, 0, MMU::page_tables(MMU::pages(si->lm.app_data_size)) * sizeof(Page));
 
     // APPLICATION code
-    configure_page_table_descriptors(???);
+    // configure_page_table_descriptors(???);
 
     // APPLICATION data (contains stack, heap and extra)
-    configure_page_table_descriptors(???);
+    // configure_page_table_descriptors(???);
 
     db<Setup>(INF) << "APPC_PT=" << *reinterpret_cast<Page_Table *>(app_code_pt) << endl;
     db<Setup>(INF) << "APPD_PT=" << *reinterpret_cast<Page_Table *>(app_data_pt) << endl;
