@@ -395,7 +395,7 @@ void Setup::build_pmm()
         top_page -= 1;
     si->pmm.sys_info = top_page * sizeof(Page);
 
-    // SYSTEM code segment -- For this test, everything will be in physical memory (what?)
+    // SYSTEM code segment
     top_page -= MMU::pages(si->lm.sys_code_size);
     si->pmm.sys_code = top_page * sizeof(Page);
 
@@ -516,29 +516,14 @@ void Setup::setup_sys_pt()
     // System Page Directory
     sys_pt[MMU::page(SYS_PD)] = MMU::phy2pte(si->pmm.sys_pd, Flags::SYS);
 
-    // // SYSTEM code
-    // TODO: configure_page_table_descriptors(???);
-
-    // // SYSTEM data
-    // TODO: configure_page_table_descriptors(???);
-
-    // // SYSTEM stack (used only during init and for the ukernel model)
-    // TODO: configure_page_table_descriptors(???);
-
-    unsigned int i;
-    PT_Entry aux;
-
     // SYSTEM code
-    for(i = 0, aux = si->pmm.sys_code; i < MMU::pages(si->lm.sys_code_size); i++, aux = aux + sizeof(Page))
-        sys_pt[MMU::page(SYS_CODE) + i] = MMU::phy2pte(aux, Flags::SYS);
+    configure_page_table_descriptors(sys_pt, si->pmm.sys_code, si->lm.sys_code_size, MMU::pages(si->lm.sys_code_size), Flags::SYS);
 
     // SYSTEM data
-    for(i = 0, aux = si->pmm.sys_data; i < MMU::pages(si->lm.sys_data_size); i++, aux = aux + sizeof(Page))
-        sys_pt[MMU::page(SYS_DATA) + i] = MMU::phy2pte(aux, Flags::SYS);
+    configure_page_table_descriptors(sys_pt, si->pmm.sys_data, si->lm.sys_data_size, MMU::pages(si->lm.sys_data_size), Flags::SYS);
 
     // SYSTEM stack (used only during init and for the ukernel model)
-    for(i = 0, aux = si->pmm.sys_stack; i < MMU::pages(si->lm.sys_stack_size); i++, aux = aux + sizeof(Page))
-        sys_pt[MMU::page(SYS_STACK) + i] = MMU::phy2pte(aux, Flags::SYS);
+    configure_page_table_descriptors(sys_pt, si->pmm.sys_stack, si->lm.sys_stack_size, MMU::pages(si->lm.sys_stack_size), Flags::SYS);
 
     db<Setup>(INF) << "SYS_PT=" << *reinterpret_cast<Page_Table *>(sys_pt) << endl;
 }
@@ -558,18 +543,11 @@ void Setup::setup_app_pt()
     memset(app_code_pt, 0, MMU::page_tables(MMU::pages(si->lm.app_code_size)) * sizeof(Page));
     memset(app_data_pt, 0, MMU::page_tables(MMU::pages(si->lm.app_data_size)) * sizeof(Page));
 
-    unsigned int i;
-    PT_Entry aux;
-
     // APPLICATION code
-    // TODO: configure_page_table_descriptors(???);
-    for(i = 0, aux = si->pmm.app_code; i < MMU::pages(si->lm.app_code_size); i++, aux = aux + sizeof(Page))
-        app_code_pt[MMU::page(si->lm.app_code) + i] = MMU::phy2pte(aux, Flags::APP);
+    configure_page_table_descriptors(app_code_pt, si->pmm.app_code, si->lm.app_code_size, MMU::pages(si->lm.app_code_size), Flags::APP);
 
     // APPLICATION data (contains stack, heap and extra)
-    // TODO: configure_page_table_descriptors(???);
-    for(i = 0, aux = si->pmm.app_data; i < MMU::pages(si->lm.app_data_size); i++, aux = aux + sizeof(Page))
-        app_data_pt[MMU::page(si->lm.app_data) + i] = MMU::phy2pte(aux, Flags::APP);
+    configure_page_table_descriptors(app_code_pt, si->pmm.app_data, si->lm.app_data_size, MMU::pages(si->lm.app_data_size), Flags::APP);
 
     db<Setup>(INF) << "APPC_PT=" << *reinterpret_cast<Page_Table *>(app_code_pt) << endl;
     db<Setup>(INF) << "APPD_PT=" << *reinterpret_cast<Page_Table *>(app_data_pt) << endl;
@@ -608,13 +586,11 @@ void Setup::setup_sys_pd()
 
     // Calculate the number of page tables needed to map the physical memory
     unsigned int mem_size = MMU::pages(si->bm.mem_top - si->bm.mem_base);
-    int n_pts = MMU::page_tables(mem_size);
+    unsigned int n_pts = MMU::page_tables(mem_size);
 
     // Map the whole physical memory into the page tables pointed by phy_mem_pts
-    // TODO: configure_page_table_descriptors(???);
     PT_Entry * pts = reinterpret_cast<PT_Entry *>(si->pmm.phy_mem_pts);
-    for(unsigned int i = 0; i < mem_size; i++)
-        pts[i] = MMU::phy2pte((si->bm.mem_base + i * sizeof(Page)), Flags::SYS);
+    configure_page_table_descriptors(pts, si->bm.mem_base, mem_size, n_pts, Flags::SYS)
 
     // Attach the portion of the physical memory used by Setup at SETUP
     sys_pd[MMU::directory(SETUP)] =  MMU::phy2pde(si->pmm.phy_mem_pts);
@@ -629,10 +605,8 @@ void Setup::setup_sys_pd()
     n_pts = MMU::page_tables(io_size);
 
     // Map IO address space into the page tables pointed by io_pts
-    // TODO: configure_page_table_descriptors(???);
     pts = reinterpret_cast<PT_Entry *>(si->pmm.io_pts);
-    for(unsigned int i = 0; i < io_size; i++)
-        pts[i] = MMU::phy2pte((si->bm.mio_base + i * sizeof(Page)), Flags::IO);
+    configure_page_table_descriptors(pts, si->bm.mio_base, io_size, n_pts, Flags::SYS)
 
     // Attach devices' memory at Memory_Map::IO
     assert((MMU::directory(MMU::align_directory(IO)) + n_pts) < (MMU::PD_ENTRIES - 3)); // check if it would overwrite the OS
