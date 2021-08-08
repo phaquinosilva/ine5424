@@ -161,7 +161,7 @@ public:
     };
 
     // Page Directory
-    class Page_Table Page_Directory;
+    class Page_Directory;
 
     // Directory (for Address_Space)
     class Directory
@@ -240,8 +240,8 @@ public:
         bool _free;
     };
 
-    // DMA_Buffer
-    class DMA_Buffer: public Chunk;
+    // DMA_Buffer -- assume MMU has complete memory control, does not provide DMA
+    class DMA_Buffer;
 
     // Class Translation performs manual logical to physical address translations for debugging purposes only
     class Translation;
