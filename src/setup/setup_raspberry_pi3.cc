@@ -505,17 +505,16 @@ void Setup::setup_sys_pt()
     PT_Entry * sys_pt = reinterpret_cast<PT_Entry *>(si->pmm.sys_pt);
 
     // Clear the System Page Table
-    memset(sys_pt, 0, 2*sizeof(Page));
+    memset(sys_pt, 0, sizeof(Page));
 
-    // TODO: System Info (nao encontrei em setup_legacy_pc)
+    // System Info
+    sys_pt[MMU::page(SYS_INFO)] = MMU::phy2pte(si->pmm.sys_info, Flags::SYS);
 
-    // Set an entry to this page table, so the system can access it later -- ??? pages for entries
-    // TODO: nao estamos definindo aqui o tamanho das paginas, checar se algo as define
-    sys_pt[MMU::page(SYS_PT)] = si->pmm.sys_pt | Flags::SYS;
+    // Set an entry to this page table, so the system can access it later
+    sys_pt[MMU::page(SYS_PT)] = MMU::phy2pte(si->pmm.sys_pt, Flags::SYS);
 
-    // System Page Directory -- ??? Pages for directory
-    // TODO: nao estamos definindo aqui o tamanho das paginas, checar se algo as define
-    sys_pt[MMU::page(SYS_PD)] = si->pmm.sys_pd | Flags::SYS;
+    // System Page Directory
+    sys_pt[MMU::page(SYS_PD)] = MMU::phy2pte(si->pmm.sys_pd, Flags::SYS);
 
     // // SYSTEM code
     // configure_page_table_descriptors(???);
@@ -526,28 +525,22 @@ void Setup::setup_sys_pt()
     // // SYSTEM stack (used only during init and for the ukernel model)
     // configure_page_table_descriptors(???);
 
-    // TODO: remover comentarios ou realmente criar essas funções.
-    //       criar as funções parece idiota porque existem argumentos demais?
-    // - pmm.sys_code
-    // - lm.sys_code_size
-    // - SYS_CODE
+    unsigned int i;
+    PT_Entry aux;
 
     // SYSTEM code
-    // TODO: checar com sifive.
     for(i = 0, aux = si->pmm.sys_code; i < MMU::pages(si->lm.sys_code_size); i++, aux = aux + sizeof(Page))
-        sys_pt[MMU::page(SYS_CODE) + i] = aux | Flags::SYS;
+        sys_pt[MMU::page(SYS_CODE) + i] = MMU::phy2pte(aux, Flags::SYS);
 
     // SYSTEM data
-    // TODO: checar com sifive.
     for(i = 0, aux = si->pmm.sys_data; i < MMU::pages(si->lm.sys_data_size); i++, aux = aux + sizeof(Page))
-        sys_pt[MMU::page(SYS_DATA) + i] = aux | Flags::SYS;
+        sys_pt[MMU::page(SYS_DATA) + i] = MMU::phy2pte(aux, Flags::SYS);
 
     // SYSTEM stack (used only during init and for the ukernel model)
-    // TODO: checar com sifive.
     for(i = 0, aux = si->pmm.sys_stack; i < MMU::pages(si->lm.sys_stack_size); i++, aux = aux + sizeof(Page))
-        sys_pt[MMU::page(SYS_STACK) + i] = aux | Flags::SYS;
+        sys_pt[MMU::page(SYS_STACK) + i] = MMU::phy2pte(aux, Flags::SYS);
 
-    db<Setup>(TRC) << "SYS_PT=" << *reinterpret_cast<Page_Table *>(sys_pt) << endl;
+    db<Setup>(INF) << "SYS_PT=" << *reinterpret_cast<Page_Table *>(sys_pt) << endl;
 }
 
 // TODO: nao existe no riscv ao menos
