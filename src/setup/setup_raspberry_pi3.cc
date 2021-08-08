@@ -611,19 +611,13 @@ void Setup::setup_sys_pd()
     int n_pts = MMU::page_tables(mem_size);
 
     // Map the whole physical memory into the page tables pointed by phy_mem_pts
+    // TODO: configure_page_table_descriptors(???);
     PT_Entry * pts = reinterpret_cast<PT_Entry *>(si->pmm.phy_mem_pts);
     for(unsigned int i = 0; i < mem_size; i++)
         pts[i] = MMU::phy2pte((si->bm.mem_base + i * sizeof(Page)), Flags::SYS);
 
-    // Attach all physical memory starting at PHY_MEM
-    // TODO: configure_page_table_descriptors(???);
-    assert((MMU::directory(MMU::align_directory(PHY_MEM)) + n_pts) < (MMU::PD_ENTRIES - 4)); // check if it would overwrite the OS
-    for(unsigned int i = MMU::directory(MMU::align_directory(PHY_MEM)), j = 0; i < MMU::directory(MMU::align_directory(PHY_MEM)) + n_pts; i++, j++)
-        sys_pd[i] = MMU::phy2pde(si->pmm.phy_mem_pts + j * sizeof(Page));
-
     // Attach the portion of the physical memory used by Setup at SETUP
     sys_pd[MMU::directory(SETUP)] =  MMU::phy2pde(si->pmm.phy_mem_pts);
-
 
     // Attach all physical memory starting at MEM_BASE
     assert((MMU::directory(MMU::align_directory(MEM_BASE)) + n_pts) < (MMU::PD_ENTRIES - 4)); // check if it would overwrite the OS
@@ -635,6 +629,7 @@ void Setup::setup_sys_pd()
     n_pts = MMU::page_tables(io_size);
 
     // Map IO address space into the page tables pointed by io_pts
+    // TODO: configure_page_table_descriptors(???);
     pts = reinterpret_cast<PT_Entry *>(si->pmm.io_pts);
     for(unsigned int i = 0; i < io_size; i++)
         pts[i] = MMU::phy2pte((si->bm.mio_base + i * sizeof(Page)), Flags::IO);
