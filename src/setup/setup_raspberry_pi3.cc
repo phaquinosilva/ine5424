@@ -525,7 +525,7 @@ void Setup::setup_sys_pt()
     // SYSTEM stack (used only during init and for the ukernel model)
     configure_page_table_descriptors(sys_pt, si->pmm.sys_stack, si->lm.sys_stack_size, MMU::pages(si->lm.sys_stack_size), Flags::SYS);
 
-    db<Setup>(INF) << "SYS_PT=" << *reinterpret_cast<Page_Table *>(sys_pt) << endl;
+    db<Setup>(TRC) << "SYS_PT=" << *reinterpret_cast<Page_Table *>(sys_pt) << endl;
 }
 
 void Setup::setup_app_pt()
@@ -626,7 +626,7 @@ void Setup::setup_sys_pd()
     for(unsigned int i = MMU::directory(MMU::align_directory(si->lm.app_data)), j = 0; i < MMU::directory(MMU::align_directory(si->lm.app_data)) + n_pts; i++, j++)
         sys_pd[i] = MMU::phy2pde(si->pmm.app_data_pts + j * sizeof(Page));
 
-    db<Setup>(INF) << "SYS_PD=" << *reinterpret_cast<Page_Table *>(sys_pd) << endl;
+    db<Setup>(TRC) << "SYS_PD=" << *reinterpret_cast<Page_Table *>(sys_pd) << endl;
 }
 
 void Setup::enable_paging()
