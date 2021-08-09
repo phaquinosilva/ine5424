@@ -27,28 +27,62 @@ public:
     {
     public:
         enum {
-              = 1 << 0, // Present
-               = 1 << 1, // Readable
-               = 1 << 2, // Writable
-               = 1 << 3, // Executable
-              = 1 << 4, // Access Control (0=supervisor, 1=user)
-               = 1 << 5, // Cache disable (0=cacheable, 1=non-cacheable)
-              = 1 << 6, // Cache mode (0=write-back, 1=write-through)
-               = 1 << 7, // Contiguous (0=non-contiguous, 1=contiguous)
-               = 1 << 8, // Memory Mapped I/O (0=memory, 1=I/O)
-        }
+            // Small page
+            XN          = 1 << 0,   // Execute never. Stops execution of page. Bit in the translation table entry prevents speculative instruction fetches taking place from desired memory locations
+            ONE         = 1 << 0,   // Default
+            B           = 1 << 2,   // Bufferable
+            C           = 1 << 3,   // Cacheable
+            AP_ZERO     = 1 << 4,   // Access permission bit 0, meaning privileged access only
+            AP_ONE      = 1 << 5,   // Access permission bit 1, meaning no user-mode write
+            TEX_ZERO    = 1 << 6,   // Type extension bit 0
+            TEX_ONE     = 1 << 7,   // Type extension bit 1
+            TEX_TWO     = 1 << 8,   // Type extension bit 2
+            APX         = 1 << 9,   // Access permission auxiliar
+            S           = 1 << 10,  // Sharable
+            NG          = 1 << 11,  // Defines the page as being global (applies to all processes) or non-global (usedby a specific process)
+            
+            V           = 1 << 0,   // Valid
+            R           = 1 << 1,   // Readable
+            W           = 1 << 2,   // Writable
+            X           = 1 << 3,   // Executable
+            U           = 1 << 4,   // User accessible
+            G           = 1 << 5,   // Global (mapped in multiple PTs)
+            A           = 1 << 6,   // Accessed
+            D           = 1 << 7,   // Dirty
+            CT          = 1 << 8,   // Contiguous (reserved for use by supervisor RSW)
+            MIO         = 1 << 9,   // I/O (reserved for use by supervisor RSW)
+            APP         = (V | R | W | X | U),
+            APPC        = (V | R | X | U),
+            APPD        = (V | R | W | U),
+            SYS         = (V | R | W | X),
+            IO          = (SYS | MIO),
+            DMA         = (SYS | CT),
+            MASK        = (1 << 10) - 1,
+
+            FULL_ACCESS             = (AP_ZERO | AP_ONE),
+            PRIVILEGED_READ_ONLY    = (APX | AP_ONE),
+            READ_ONLY               = (APX | AP_ONE),
+
+            STRONGLY_ORDERED        = 0,
+            SHARABLE_DEVICE         = B,
+            OI_WRITE_THROUGH        = C,        // Outer and Inner write-through, no allocate on write
+            OI_WRITE_BACK           = (B | C),  // Outer and Inner write-back, no allocate on write
+            OI_NON_CACHEABLE        = TEX_ZERO, // Outer and Inner non-cacheable
+            NON_SHARABLE_DEVICE     = TEX_ONE  // Non-shareable device
+        };
+
     public:
         Page_Flags() {}
         Page_Flags(unsigned int f) : _flags(f) {}
         Page_Flags(Flags f) : _flags(V |
-                                     ((f & Flags::RD)  ? R  : 0) |
-                                     ((f & Flags::RW)  ? W  : 0) |
-                                     ((f & Flags::EX)  ? X  : 0) |
-                                     ((f & Flags::USR) ? U  : 0) |
-                                     ((f & Flags::CWT) ? 0  : 0) |
-                                     ((f & Flags::CD)  ? 0  : 0) |
-                                     ((f & Flags::CT)  ? CT : 0) |
-                                     ((f & Flags::IO)  ? IO : 0) ) {}
+                                     ((f & Flags::RD)  ? R : 0)                            |
+                                     ((f & Flags::RW)  ? W : 0)                            |
+                                     ((f & Flags::EX)  ? X : 0)                            |
+                                     ((f & Flags::USR) ? U : 0)                            |
+                                     ((f & Flags::CWT) ? OI_WRITE_THROUGH : OI_WRITE_BACK) |
+                                     ((f & Flags::CD)  ? 0 : C)                            |
+                                     ((f & Flags::CT)  ? CT: 0)                            |
+                                     ((f & Flags::IO)  ? IO: 0)                            ) {}
 
         operator unsigned int() const { return _flags; }
 
@@ -58,9 +92,6 @@ public:
         unsigned int _flags;
     };;
 
-    /* The rest seem to be the same for the other architecures,
-    so I'll assume the same applies here */
-    
     // Page_Table
     class Page_Table
     {
@@ -194,7 +225,7 @@ public:
     };
 
     // Page Directory
-    class Page_Directory;
+    typedef Page_Table Page_Directory;
 
     // Directory (for Address_Space)
     class Directory
@@ -278,7 +309,29 @@ public:
 
 
     // Class Translation performs manual logical to physical address translations for debugging purposes only
-    class Translation;
+    class Translation
+    {
+    public:
+        Translation(Log_Addr addr, bool pt = false, Page_Directory * pd = 0): _addr(addr), _show_pt(pt), _pd(pd) {}
+
+        friend OStream & operator<<(OStream & os, const Translation & t) {
+            Page_Directory * pd = t._pd ? t._pd : current();
+            PD_Entry pde = (*pd)[directory(t._addr)];
+            Page_Table * pt = static_cast<Page_Table *>(pde);
+            PT_Entry pte = (*pt)[page(t._addr)];
+
+            os << "{addr=" << static_cast<void *>(t._addr) << ",pd=" << pd << ",pd[" << directory(t._addr) << "]=" << pde << ",pt=" << pt;
+            if(t._show_pt)
+                os << "=>" << *pt;
+            os << ",pt[" << page(t._addr) << "]=f=" << pte << ",*addr=" << hex << *static_cast<unsigned int *>(t._addr) << "}";
+            return os;
+        }
+
+    private:
+        Log_Addr _addr;
+        bool _show_pt;
+        Page_Directory * _pd;
+    };
 
 public:
     ARMv7_MMU() {}
@@ -350,10 +403,11 @@ public:
     static Phy_Addr pde2phy(PD_Entry entry) { return (entry & ~Page_Flags::MASK) << 2; }
 
     static void flush_tlb() {
-        //TODO
+    //     ASM("movl %cr3,%eax");
+    //     ASM("movl %eax,%cr3");
     }
-    static void flush_tlb(Log_Addr addr) {
-        //TODO
+    static void flush_tlb(const Log_Addr & addr) {
+        // ASM("invlpg %0" : : "m"(addr));
     }
 
     static Log_Addr phy2log(Phy_Addr phy) { return Log_Addr((MEM_BASE == PHY_MEM) ? phy : (MEM_BASE > PHY_MEM) ? phy - (MEM_BASE - PHY_MEM) : phy + (PHY_MEM - MEM_BASE)); }
