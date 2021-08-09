@@ -590,7 +590,7 @@ void Setup::setup_sys_pd()
 
     // Map the whole physical memory into the page tables pointed by phy_mem_pts
     PT_Entry * pts = reinterpret_cast<PT_Entry *>(si->pmm.phy_mem_pts);
-    configure_page_table_descriptors(pts, si->bm.mem_base, mem_size, n_pts, Flags::SYS)
+    configure_page_table_descriptors(pts, si->bm.mem_base, mem_size, n_pts, Flags::SYS);
 
     // Attach the portion of the physical memory used by Setup at SETUP
     sys_pd[MMU::directory(SETUP)] =  MMU::phy2pde(si->pmm.phy_mem_pts);
@@ -606,7 +606,7 @@ void Setup::setup_sys_pd()
 
     // Map IO address space into the page tables pointed by io_pts
     pts = reinterpret_cast<PT_Entry *>(si->pmm.io_pts);
-    configure_page_table_descriptors(pts, si->bm.mio_base, io_size, n_pts, Flags::SYS)
+    configure_page_table_descriptors(pts, si->bm.mio_base, io_size, n_pts, Flags::SYS);
 
     // Attach devices' memory at Memory_Map::IO
     assert((MMU::directory(MMU::align_directory(IO)) + n_pts) < (MMU::PD_ENTRIES - 3)); // check if it would overwrite the OS
