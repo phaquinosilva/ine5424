@@ -244,7 +244,8 @@ namespace List_Elements
         Doubly_Linked_Grouping(const T * o, int s): _object(o), _size(s), _prev(0), _next(0) {}
 
         T * object() const { return const_cast<T *>(_object); }
-
+        void object(const T * obj) { _object = obj; }
+        
         Element * prev() const { return _prev; }
         Element * next() const { return _next; }
         void prev(Element * e) { _prev = e; }
@@ -1390,6 +1391,25 @@ public:
         }
 
         return e;
+    }
+
+    Element * search_heap(unsigned int s) {
+        db<Lists>(TRC) << "Grouping_List::search_heap(s=" << s << ")" << endl;
+        print_head();
+        print_tail();
+
+        Element * e = search_size(s);
+        Element * prev = 0;
+        if(e) {
+            prev = e;
+            e->object(e->object() + s);
+            e->shrink(s);
+            _grouped_size -= s;
+            if(!e->size())
+                remove(e);
+        }
+
+        return prev;
     }
 
 private:

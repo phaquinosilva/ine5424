@@ -45,15 +45,17 @@ public:
         bytes += sizeof(int);         // add room for size
         if(bytes < sizeof(Element))
             bytes = sizeof(Element);
-
-        Element * e = search_decrementing(bytes);
+        
+        Element * e = search_heap(bytes);
+        //Element * e = search_decrementing(bytes);
         if(!e) {
             out_of_memory();
             return 0;
         }
+        // don't add element size
+        int * addr = reinterpret_cast<int *>(e->object());
 
-        int * addr = reinterpret_cast<int *>(e->object() + e->size());
-
+        // save relevant info
         if(typed)
             *addr++ = reinterpret_cast<int>(this);
         *addr++ = bytes;
@@ -66,6 +68,7 @@ public:
     void free(void * ptr, unsigned int bytes) {
         db<Heaps>(TRC) << "Heap::free(this=" << this << ",ptr=" << ptr << ",bytes=" << bytes << ")" << endl;
 
+        // Doesn't work, and we haven't fixed it (possibly yet).
         if(ptr && (bytes >= sizeof(Element))) {
             Element * e = new (ptr) Element(reinterpret_cast<char *>(ptr), bytes);
             Element * m1, * m2;
