@@ -3,6 +3,7 @@
 #ifndef __process_h
 #define __process_h
 
+#include <memory.h>
 #include <architecture.h>
 #include <machine.h>
 #include <utility/queue.h>
@@ -58,12 +59,13 @@ public:
 
     // Thread Configuration
     struct Configuration {
-        Configuration(const State & s = READY, const Criterion & c = NORMAL, unsigned int ss = STACK_SIZE)
-        : state(s), criterion(c), stack_size(ss) {}
+        Configuration(const State & s = READY, const Criterion & c = NORMAL, unsigned int ss = STACK_SIZE, const Task t = 0)
+        : state(s), criterion(c), stack_size(ss), task(t) {}
 
         State state;
         Criterion criterion;
         unsigned int stack_size;
+        Task * task;  // task to which the thread is related
     };
 
 
@@ -117,6 +119,10 @@ private:
     static void init();
 
 protected:
+    /* In EPOS develop, not sure what it does yet. */
+    Task * _task;
+    Segment * _user_segment;
+
     char * _stack;
     Context * volatile _context;
     volatile State _state;
@@ -178,6 +184,88 @@ private:
     Thread * _handler;
 };
 
+
+class Task 
+{
+    friend class Thread;
+private:
+    static const bool multitask = Traits<System>::multitask;
+    typedef CPU::Log_Addr Log_Addr;
+    typedef CPU::Phy_Addr Phy_Addr;
+    typedef CPU::Context Context;
+    typedef Thread::Queue Queue;
+
+protected:
+    // This constructor is only used by Thread::init()
+    template<typename ... Tn>
+    Task(Address_Space * as, Segment * cs, Segment * ds, int (* entry)(Tn ...), const Log_Addr & code, const Log_Addr & data, Tn ... an)
+    : _as(as), _cs(cs), _ds(ds), _entry(entry), _code(code), _data(data) {
+        db<Task, Init>(TRC) << "Task(as=" << _as << ",cs=" << _cs << ",ds=" << _ds << ",entry=" << _entry << ",code=" << _code << ",data=" << _data << ") => " << this << endl;
+
+        _current = this;
+        activate();
+        _main = new (SYSTEM) Thread(Thread::Configuration(Thread::RUNNING, Thread::MAIN, 0, this), entry, an ...);
+    }
+
+public:
+    /* Creates Task and attach segments without Thread::Configuration */
+    template<typename ... Tn>
+    Task(Segment * cs, Segment * ds, int (* entry)(Tn ...), Tn ... an)
+    : _as (new (SYSTEM) Address_Space), _cs(cs), _ds(ds), _entry(entry), _code(_as->attach(_cs)), _data(_as->attach(_ds)) {
+        db<Task>(TRC) << "Task(as=" << _as << ",cs=" << _cs << ",ds=" << _ds << ",entry=" << _entry << ",code=" << _code << ",data=" << _data << ") => " << this << endl;
+
+        _main = new (SYSTEM) Thread(Thread::Configuration(Thread::READY, Thread::MAIN, 0, this), entry, an ...);
+    }
+
+    /* Creates Task and attach segments, data specified in Thread::Configuration */
+    template<typename ... Tn>
+    Task(const Thread::Configuration & conf, Segment * cs, Segment * ds, int (* entry)(Tn ...), Tn ... an)
+    : _as (new (SYSTEM) Address_Space), _cs(cs), _ds(ds), _entry(entry), _code(_as->attach(_cs)), _data(_as->attach(_ds)) {
+        db<Task>(TRC) << "Task(as=" << _as << ",cs=" << _cs << ",ds=" << _ds << ",entry=" << _entry << ",code=" << _code << ",data=" << _data << ") => " << this << endl;
+
+        _main = new (SYSTEM) Thread(Thread::Configuration(conf.state, conf.criterion, 0, this), entry, an ...);
+    }
+
+    ~Task();
+
+    Address_Space * address_space() const { return _as; }
+
+    Segment * code_segment() const { return _cs; }
+    Segment * data_segment() const { return _ds; }
+
+    Log_Addr code() const { return _code; }
+    Log_Addr data() const { return _data; }
+
+    Thread * main() const { return _main; }
+
+    static Task * volatile self() { return current(); }
+
+private:
+
+    void activate() const { _as->activate(); }
+
+    void insert(Thread * t) { _threads.insert(new (SYSTEM) Queue::Element(t)); }
+    void remove(Thread * t) { Queue::Element * el = _threads.remove(t); if(el) delete el; }
+
+    /* For main Task? */
+    static Task * volatile current() { return _current; }
+    static void current(Task * t) { _current = t; }
+
+    static void init();
+
+private:
+    Address_Space * _as;
+    Segment * _cs;
+    Segment * _ds;
+    Log_Addr _entry;
+    Log_Addr _code;
+    Log_Addr _data;
+    Thread * _main;
+    Queue _threads;
+
+    static Task * volatile _current;
+};
+   
 __END_SYS
 
 #endif
