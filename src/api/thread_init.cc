@@ -35,11 +35,13 @@ void Thread::init()
         Segment * ds = new (SYSTEM) Segment(Log_Addr(si->lm.app_data), si->lm.app_data_size, Segment::Flags::APPD);
         Log_Addr code = si->lm.app_code;
         Log_Addr data = si->lm.app_data;
-        // @pedro: I believe these are for additional space Task eventually might need
-        int argc = static_cast<int>(si->lm.app_extra_size);
-        char ** argv = reinterpret_cast<char **>(si->lm.app_extra);
-        new (SYSTEM) Task(as, cs, ds, main, code, data, argc, argv);
+        /* Argument passing */ //@pedro: not functioning
+        // int argc = static_cast<int>(si->lm.app_extra_size);
+        // int * argv = static_cast<int *>(si->lm.app_extra);
+        // new (SYSTEM) Task(as, cs, ds, main, code, data, argc, argv);
 
+        new (SYSTEM) Task(as, cs, ds, main, code, data);
+        
         if(si->lm.has_ext)
             db<Init>(INF) << "Thread::init: additional data from mkbi at "  << reinterpret_cast<void *>(si->lm.app_extra) << ":" << si->lm.app_extra_size << endl;
     
