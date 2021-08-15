@@ -27,9 +27,11 @@ class Thread
 protected:
     static const bool preemptive = Traits<Thread>::Criterion::preemptive;
     static const bool reboot = Traits<System>::reboot;
+    static const bool multitask = Traits<System>::multitask;
 
     static const unsigned int QUANTUM = Traits<Thread>::QUANTUM;
-    static const unsigned int STACK_SIZE = Traits<Application>::STACK_SIZE;
+    static const unsigned int STACK_SIZE = Traits<System>::STACK_SIZE;
+    static const unsigned int USER_STACK_SIZE = Traits<Application>::STACK_SIZE;
 
     typedef CPU::Log_Addr Log_Addr;
     typedef CPU::Context Context;
@@ -59,7 +61,7 @@ public:
 
     // Thread Configuration
     struct Configuration {
-        Configuration(const State & s = READY, const Criterion & c = NORMAL, unsigned int ss = STACK_SIZE, const Task t = 0)
+        Configuration(const State & s = READY, const Criterion & c = NORMAL, unsigned int ss = STACK_SIZE, Task * t = 0)
         : state(s), criterion(c), stack_size(ss), task(t) {}
 
         State state;
@@ -119,9 +121,9 @@ private:
     static void init();
 
 protected:
-    /* In EPOS develop, not sure what it does yet. */
+    /* From EPOS dev, not sure what it does yet. */
     Task * _task;
-    Segment * _user_segment;
+    Segment * _user_stack;
 
     char * _stack;
     Context * volatile _context;
@@ -135,24 +137,24 @@ protected:
     static Scheduler<Thread> _scheduler;
 };
 
+// @pedro: NOT USED
+// template<typename ... Tn>
+// inline Thread::Thread(int (* entry)(Tn ...), Tn ... an)
+// : _state(READY), _waiting(0), _joining(0), _link(this, NORMAL)
+// {
+//     constructor_prologue(STACK_SIZE);
+//     _context = CPU::init_stack(0, _stack + STACK_SIZE, &__exit, entry, an ...);
+//     constructor_epilogue(entry, STACK_SIZE);
+// }
 
-template<typename ... Tn>
-inline Thread::Thread(int (* entry)(Tn ...), Tn ... an)
-: _state(READY), _waiting(0), _joining(0), _link(this, NORMAL)
-{
-    constructor_prologue(STACK_SIZE);
-    _context = CPU::init_stack(0, _stack + STACK_SIZE, &__exit, entry, an ...);
-    constructor_epilogue(entry, STACK_SIZE);
-}
-
-template<typename ... Tn>
-inline Thread::Thread(const Configuration & conf, int (* entry)(Tn ...), Tn ... an)
-: _state(conf.state), _waiting(0), _joining(0), _link(this, conf.criterion)
-{
-    constructor_prologue(conf.stack_size);
-    _context = CPU::init_stack(0, _stack + conf.stack_size, &__exit, entry, an ...);
-    constructor_epilogue(entry, conf.stack_size);
-}
+// template<typename ... Tn>
+// inline Thread::Thread(const Configuration & conf, int (* entry)(Tn ...), Tn ... an)
+// : _state(conf.state), _waiting(0), _joining(0), _link(this, conf.criterion)
+// {
+//     constructor_prologue(conf.stack_size);
+//     _context = CPU::init_stack(0, _stack + conf.stack_size, &__exit, entry, an ...);
+//     constructor_epilogue(entry, conf.stack_size);
+// }
 
 
 // A Java-like Active Object
@@ -184,7 +186,7 @@ private:
     Thread * _handler;
 };
 
-
+// @pedro: Taken from EPOS dev branch, coloring removed
 class Task 
 {
     friend class Thread;
@@ -265,7 +267,58 @@ private:
 
     static Task * volatile _current;
 };
-   
+
+// @pedro: Also taken from EPOS dev
+
+// Thread inline methods that depend on Task
+template<typename ... Tn>
+inline Thread::Thread(int (* entry)(Tn ...), Tn ... an)
+: _task(Task::self()), _user_stack(0), _state(READY), _waiting(0), _joining(0), _link(this, NORMAL)
+{
+    constructor_prologue(STACK_SIZE);
+    _context = CPU::init_stack(0, _stack + STACK_SIZE, &__exit, entry, an ...);
+    constructor_epilogue(entry, STACK_SIZE);
+}
+
+template<typename ... Tn>
+inline Thread::Thread(const Configuration & conf, int (* entry)(Tn ...), Tn ... an)
+: _task(conf.task ? conf.task : Task::self()), _state(conf.state), _waiting(0), _joining(0), _link(this, conf.criterion)
+{
+    if(multitask && !conf.stack_size) { // auto-expand, user-level stack
+        constructor_prologue(STACK_SIZE);
+        _user_stack = new (SYSTEM) Segment(USER_STACK_SIZE);
+
+        // Attach the thread's user-level stack to the current address space so we can initialize it
+        Log_Addr ustack = Task::self()->address_space()->attach(_user_stack);
+
+        // Initialize the thread's user-level stack and determine a relative stack pointer (usp) from the top of the stack
+        Log_Addr usp = ustack + USER_STACK_SIZE;
+        if(conf.criterion == MAIN)
+            usp -= CPU::init_user_stack(usp, 0, an ...); // the main thread of each task must return to crt0 to call _fini (global destructors) before calling __exit
+        else
+            usp -= CPU::init_user_stack(usp, &__exit, an ...); // __exit will cause a Page Fault that must be properly handled
+
+        // Detach the thread's user-level stack from the current address space
+        Task::self()->address_space()->detach(_user_stack, ustack);
+
+        // Attach the thread's user-level stack to its task's address space so it will be able to access it when it runs
+        ustack = _task->address_space()->attach(_user_stack);
+
+        // Determine an absolute stack pointer (usp) from the top of the thread's user-level stack considering the address it will see it when it runs
+        usp = ustack + USER_STACK_SIZE - usp;
+
+        // Initialize the thread's system-level stack
+        _context = CPU::init_stack(usp, _stack + STACK_SIZE, &__exit, entry, an ...);
+    } else { // single-task scenarios and idle thread, which is a kernel thread, don't have a user-level stack
+        constructor_prologue(conf.stack_size);
+        _user_stack = 0;
+        _context = CPU::init_stack(0, _stack + conf.stack_size, &__exit, entry, an ...);
+    }
+
+    constructor_epilogue(entry, STACK_SIZE);
+}
+
+ 
 __END_SYS
 
 #endif
