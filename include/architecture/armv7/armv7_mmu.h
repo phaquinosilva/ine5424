@@ -449,11 +449,11 @@ public:
     static Phy_Addr pde2phy(PD_Entry entry) { return (entry & ~Page_Flags::PD_MASK); }
 
     static void flush_tlb() {
-        // ASM ("TLBI ALLE1");
+        // ASM ("TLBI ALLE1"); //TODO //PEDRO
     }
 
     static void flush_tlb(Log_Addr addr) {
-        // ASM ("TLBI VAE1, %0" : : "r"(addr));
+        // ASM ("TLBI VAE1, %0" : : "r"(addr)); //TODO //PEDRO
     }
 
     static Log_Addr phy2log(Phy_Addr phy) { return Log_Addr((RAM_BASE == PHY_MEM) ? phy : (RAM_BASE > PHY_MEM) ? phy - (RAM_BASE - PHY_MEM) : phy + (PHY_MEM - RAM_BASE)); }
