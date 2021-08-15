@@ -59,7 +59,7 @@ public:
 
     // Thread Configuration
     struct Configuration {
-        Configuration(const State & s = READY, const Criterion & c = NORMAL, unsigned int ss = STACK_SIZE, const Task t = 0)
+        Configuration(const State & s = READY, const Criterion & c = NORMAL, unsigned int ss = STACK_SIZE, Task * t = 0)
         : state(s), criterion(c), stack_size(ss), task(t) {}
 
         State state;
