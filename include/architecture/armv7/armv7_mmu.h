@@ -227,6 +227,7 @@ public:
     {
     public:
         Directory() : _pd(reinterpret_cast<Page_Directory *>((calloc(4, WHITE) & ~(0x3fff)))), _free(true) { // each pd has up to 4096 entries and must be aligned with 16KB
+            // @pedro: tem que alterar esse treco pra gerar o mapeamento de acordo com a mensagem do guto
             for(unsigned int i = directory(PHY_MEM); i < PD_ENTRIES; i++)
                 (*_pd)[i] = (*_master)[i];
         }
@@ -420,12 +421,14 @@ public:
     static PD_Entry phy2pde(Phy_Addr frame) { return (frame) | Page_Flags::PD_FLAGS; }
     static Phy_Addr pde2phy(PD_Entry entry) { return (entry & ~Page_Flags::PD_MASK); }
 
+    // @pedro: tem q implementar memo
+    // @pedro: dar flush na tlb toda vez que fizer attatch ou detatch
     static void flush_tlb() {
-        // ASM ("TLBI ALLE1"); //TODO //PEDRO
+        // ASM ("TLBI ALLE1"); 
     }
 
     static void flush_tlb(Log_Addr addr) {
-        // ASM ("TLBI VAE1, %0" : : "r"(addr)); //TODO //PEDRO
+        // ASM ("TLBI VAE1, %0" : : "r"(addr));
     }
 
     static Log_Addr phy2log(Phy_Addr phy) { return Log_Addr((RAM_BASE == PHY_MEM) ? phy : (RAM_BASE > PHY_MEM) ? phy - (RAM_BASE - PHY_MEM) : phy + (PHY_MEM - RAM_BASE)); }
