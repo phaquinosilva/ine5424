@@ -243,6 +243,7 @@ public:
         void activate() const { CPU::pdp(pd()); }
 
         Log_Addr attach(const Chunk & chunk, unsigned int from = directory(APP_LOW)) {
+            flush_tlb();
             for(unsigned int i = from; i < PD_ENTRIES; i++)
                 if(attach(i, chunk.pt(), chunk.pts(), chunk.flags()))
                     return i << DIRECTORY_SHIFT;
@@ -250,6 +251,7 @@ public:
         }
 
         Log_Addr attach(const Chunk & chunk, Log_Addr addr) {
+            flush_tlb();
             unsigned int from = directory(addr);
             if(attach(from, chunk.pt(), chunk.pts(), chunk.flags()))
                 return from << DIRECTORY_SHIFT;
@@ -424,7 +426,8 @@ public:
     static Phy_Addr pde2phy(PD_Entry entry) { return (entry & ~Page_Flags::PD_MASK); }
 
     static void flush_tlb() {
-        ASM("mcr   p15, 0, r0, c8, c7, 0");
+        ASM("mcr     p15, 0, r0, c7, c5, 4 \n"
+            "mcrne   p15, 0, r0, c8, c7, 0");
     }
 
     static void flush_tlb(Log_Addr addr) {
