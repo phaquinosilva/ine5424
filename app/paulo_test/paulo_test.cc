@@ -45,13 +45,18 @@ int main()
 
     cout << "My address space's page directory is located at "
          << reinterpret_cast<void *>(CPU::pdp()) << "" << endl;
+
+    // @corss ???
     Address_Space self(MMU::current());
 
-    // cout << "Creating code and data segments for the first task:" << endl;
-    // Segment * code_segment = new (SYSTEM) Segment(CODE_SIZE, Segment::Flags::SYS);
-    // Segment * data_segment = new (SYSTEM) Segment(DATA_SIZE, Segment::Flags::SYS);
-    // cout << "  extra segment 1 => " << CODE_SIZE << " bytes, done!" << endl;
-    // cout << "  extra segment 2 => " << DATA_SIZE << " bytes, done!" << endl;
+    // Segment * cs = new (SYSTEM) Segment(CODE_SIZE, Segment::Flags::SYS);
+    // Segment * ds = new (SYSTEM) Segment(DATA_SIZE, Segment::Flags::SYS);
+
+    cout << "Creating code and data segments for the first task:" << endl;
+    Segment * cs;
+    Segment * ds;
+    cout << "  extra segment 1 => " << CODE_SIZE << " bytes, done!" << endl;
+    cout << "  extra segment 2 => " << DATA_SIZE << " bytes, done!" << endl;
 
     // cout << "Creating code and data segments for the second task (which will be overwritten)..." << endl;
     // // @cross nao sei se ta certo inicializar isso e depois sobreescrever
