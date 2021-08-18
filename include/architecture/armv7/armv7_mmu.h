@@ -20,6 +20,7 @@ private:
     static const unsigned int RAM_BASE = Memory_Map::RAM_BASE;
     static const unsigned int APP_LOW = Memory_Map::APP_LOW;
     static const unsigned int PHY_MEM = Memory_Map::PHY_MEM;
+    static const unsigned int SYS = Memory_Map::SYS;
 
 public:
     // Page Flags
@@ -227,8 +228,9 @@ public:
     {
     public:
         Directory() : _pd(reinterpret_cast<Page_Directory *>((calloc(4, WHITE) & ~(0x3fff)))), _free(true) { // each pd has up to 4096 entries and must be aligned with 16KB
-            // @pedro: tem que alterar esse treco pra gerar o mapeamento de acordo com a mensagem do guto
-            for(unsigned int i = directory(PHY_MEM); i < PD_ENTRIES; i++)
+            for(unsigned int i = directory(PHY_MEM); i < directory(APP_LOW); i++)
+                (*_pd)[i] = (*_master)[i];
+            for(unsigned int i = directory(SYS); i < PD_ENTRIES; i++)
                 (*_pd)[i] = (*_master)[i];
         }
 
@@ -421,10 +423,8 @@ public:
     static PD_Entry phy2pde(Phy_Addr frame) { return (frame) | Page_Flags::PD_FLAGS; }
     static Phy_Addr pde2phy(PD_Entry entry) { return (entry & ~Page_Flags::PD_MASK); }
 
-    // @pedro: tem q implementar memo
-    // @pedro: dar flush na tlb toda vez que fizer attatch ou detatch
     static void flush_tlb() {
-        // ASM ("TLBI ALLE1"); 
+        ASM("mcr   p15, 0, r0, c8, c7, 0");
     }
 
     static void flush_tlb(Log_Addr addr) {
