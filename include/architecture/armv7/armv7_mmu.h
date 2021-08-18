@@ -250,6 +250,7 @@ public:
         }
 
         Log_Addr attach(const Chunk & chunk, Log_Addr addr) {
+            flush_tlb();
             unsigned int from = directory(addr);
             if(attach(from, chunk.pt(), chunk.pts(), chunk.flags()))
                 return from << DIRECTORY_SHIFT;
