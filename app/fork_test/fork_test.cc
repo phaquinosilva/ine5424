@@ -14,14 +14,14 @@ int print_mmu_translation()
 {
     cout << "Printing Task MMU Information:" << endl;
 
-    Task * current_task = Task::self();
+    Task * this_task = Task::self();
 
     cout << "Printing Code MMU Information:" << endl;
-    CPU::Log_Addr current_task_code_init = current_task->code();
+    CPU::Log_Addr current_task_code_init = this_task->code();
     cout << MMU::Translation(current_task_code_init) << endl;
 
     cout << "Printing Data MMU Information:" << endl;
-    CPU::Log_Addr current_task_data_init = current_task->data();
+    CPU::Log_Addr current_task_data_init = this_task->data();
     cout << MMU::Translation(current_task_data_init) << endl;
     // Address_Space * as = new (SYSTEM) Address_Space(MMU::current());
     // ?
@@ -42,74 +42,51 @@ int main()
 
     cout << "Fork test" << endl;
 
-    // Task * current_task = Task::self();
-
     cout << "My address space's page directory is located at "
          << reinterpret_cast<void *>(CPU::pdp()) << "" << endl;
     Address_Space self(MMU::current());
 
-    cout << "Creating code and data segments for the first task:" << endl;
-    Segment * code_segment = new (SYSTEM) Segment(CODE_SIZE, Segment::Flags::SYS);
-    Segment * data_segment = new (SYSTEM) Segment(DATA_SIZE, Segment::Flags::SYS);
-    cout << "  extra segment 1 => " << CODE_SIZE << " bytes, done!" << endl;
-    cout << "  extra segment 2 => " << DATA_SIZE << " bytes, done!" << endl;
+    // cout << "Creating code and data segments for the first task:" << endl;
+    // Segment * code_segment;
+    // Segment * data_segment;
 
-    cout << "Creating code and data segments for the second task (which will be overwritten)..." << endl;
-    // @cross nao sei se ta certo inicializar isso e depois sobreescrever
-    //          eu tentei nao inicializar, mas ai ele reclamava tambem.
-    Segment * code_segment_2 = new (SYSTEM) Segment(CODE_SIZE, Segment::Flags::SYS);;
-    Segment * data_segment_2 = new (SYSTEM) Segment(DATA_SIZE, Segment::Flags::SYS);;
+    // cout << "Creating code and data segments for the second task (which will be overwritten)..." << endl;
+    
+    // // // @cross nao sei se ta certo inicializar isso e depois sobreescrever
+    // // //          eu tentei nao inicializar, mas ai ele reclamava tambem.
+    // Segment * code_segment_2;
+    // Segment * data_segment_2;
 
     //@cross: checar a ordem de enable e disable
 
-    // Code attach, copying and dettaching
-    cout << "Disabling Interruptions..." << endl;
-    CPU::int_disable();
+    Task * current_task = Task::self();
     cout << "Attaching code segment..." << endl;
-    CPU::Log_Addr * code_addr = self.attach(code_segment);
-    cout << "Copying code segment..." << endl;
-    memcpy(code_segment_2, code_addr, CODE_SIZE);
-    cout << "Detaching code segment..." << endl;
-    self.detach(code_segment);
-    cout << "Enabling Interruptions again..." << endl;
-    CPU::int_enable();
-
-    // Data attach, copying and dettaching
-    cout << "Disabling Interruptions..." << endl;
+    unsigned int cs_size = current_task->code_segment()->size();
+    Segment * code_segment = new (SYSTEM) Segment(cs_size, Segment::Flags::SYS);
     CPU::int_disable();
-    cout << "Attaching data segment..." << endl;
-    CPU::Log_Addr * data_addr = self.attach(data_segment);
-    cout << "Copying data segment..." << endl;
-    memcpy(data_segment_2, data_addr, DATA_SIZE);
-    cout << "Detaching data segment..." << endl;
-    self.detach(data_segment);
-    cout << "Enabling Interruptions again..." << endl;
+    CPU::Log_Addr tmp_code = current_task->address_space()->attach(cs);
+    memcpy(tmp_code, current_task->code(), cs_size);
+    current_task->address_space()->detach(code_segment);
     CPU::int_enable();
 
-    cout << "Deleting segments from the first fork";
-    delete code_segment;
-    delete data_segment;
-    cout << "  done!" << endl;
-    // Handmade fork
-    // @cross nao sei se precisa desse system
-    
+    cout << "Attaching data segment..." << endl;
+    unsigned int ds_size = current_task->data_segment()->size();
+    Segment * data_segment = new (SYSTEM) Segment(ds_size, Segment::Flags::SYS);
+    CPU::int_disable();
+    CPU::Log_Addr tmp_data = current_task->address_space()->attach(ds);
+    memcpy(tmp_data, current_task->data(), ds_size);
+    current_task->address_space()->detach(data_segment);
+    CPU::int_enable();
+
+    cout << "EL GRANDE BOLOVO" << endl << endl;
+    cout << "EL GRANDE BOLOVO" << endl << endl;
+
     print_mmu_translation();
     
-    new (SYSTEM) Task(code_segment_2, data_segment_2, &print_mmu_translation);
+    new (SYSTEM) Task(code_segment, data_segment, &print_mmu_translation);
     // Task * new_task = new (SYSTEM) Task(code_segment_2, data_segment_2, &print_mmu_translation);
 
-    // @cross
-    // a gnete usa isso?
-    // Thread::self()->yield();
-
-
-    // call thread.dispatch()
-
-    // these are tasks, do I need thread?
-    // dispatch(current_task, new_task);
-    //  ^ aparentemente nao ujsa isso
-
-    // Thread::self()->yield();
+    Thread::self()->yield();
 
     cout << "I'm done, bye!" << endl;
 
