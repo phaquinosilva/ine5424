@@ -1,6 +1,0 @@
-1. inicia o sistema e cria a Task
-2. criar dois segmentos -> code e data
-3. atachar os segmentos ao _as da Task Main, e copiar os valores (memcopy)
-4. desatachar os segmentos e criar uma nova Task -> Task (Segment, Segment, entry...)
---> Antes e depois de desatachar chamar CPU::enable_interrupt() CPU::disable_interrupt()
-5. Colocar o entry point em outra função, que printa MMU::Translation do Address Space dele
