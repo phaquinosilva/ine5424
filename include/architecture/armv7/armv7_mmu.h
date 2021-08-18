@@ -448,10 +448,8 @@ public:
     static PD_Entry phy2pde(Phy_Addr frame) { return (frame) | Page_Flags::PD_FLAGS; }
     static Phy_Addr pde2phy(PD_Entry entry) { return (entry & ~Page_Flags::PD_MASK); }
 
-    // @pedro: tem q implementar memo
-    // @pedro: dar flush na tlb toda vez que fizer attatch ou detatch
     static void flush_tlb() {
-        // ASM ("TLBI ALLE1"); 
+        ASM("mcr   p15, 0, r0, c8, c7, 0");
     }
 
     static void flush_tlb(Log_Addr addr) {
