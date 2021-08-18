@@ -18,11 +18,21 @@ int print_mmu_translation()
 
     cout << "Printing Code MMU Information:" << endl;
     CPU::Log_Addr current_task_code_init = current_task->code();
-    cout << MMU::Translation(current_task_code_init) << endl;
+    // @cross remove this
+    Segment * current_task_code_segment = current_task->code_segment();
+    cout << "The code segment of the current task is at " << static_cast<void *>(current_task_code_init) << endl
+        << " and it ends at " << static_cast<void *>(current_task_code_init + current_task_code_segment->size()) << endl
+        << "The physical address of it is " << MMU::Translation(current_task_code_init) << endl << endl;
+    // cout << MMU::Translation(current_task_code_init) << endl;
 
     cout << "Printing Data MMU Information:" << endl;
     CPU::Log_Addr current_task_data_init = current_task->data();
-    cout << MMU::Translation(current_task_data_init) << endl;
+    // cout << MMU::Translation(current_task_data_init) << endl;
+    // @cross remove this
+    Segment * current_task_data_segment = current_task->data_segment();
+    cout << "The data segment of the current task is at " << static_cast<void *>(current_task_data_init) << endl
+        << " and it ends at " << static_cast<void *>(current_task_data_init + current_task_data_segment->size()) << endl
+        << "The physical address of it is " << MMU::Translation(current_task_data_init) << endl << endl;
     // Address_Space * as = new (SYSTEM) Address_Space(MMU::current());
     // ?
 
@@ -56,7 +66,7 @@ int main()
     Segment * cs;
     Segment * ds;
     cout << "  extra segment 1 => " << CODE_SIZE << " bytes, done!" << endl;
-    cout << "  extra segment 2 => " << DATA_SIZE << " bytes, done!" << endl;
+    cout << "  extra segment 2 => " << DATA_SIZE << " bytes, done!" << endl << endl;
 
     // cout << "Creating code and data segments for the second task (which will be overwritten)..." << endl;
     // // @cross nao sei se ta certo inicializar isso e depois sobreescrever
@@ -86,17 +96,18 @@ int main()
     CPU::int_enable();
 
 
-    cout << "Deleting segments from the first fork";
-    delete cs;
-    delete ds;
-    cout << "  done!" << endl;
     // Handmade fork
     // @cross nao sei se precisa desse system
     
     print_mmu_translation();
     
-    new (SYSTEM) Task(tmp_code, tmp_data, &print_mmu_translation);
+    new (SYSTEM) Task(cs, ds, &print_mmu_translation);
     // Task * new_task = new (SYSTEM) Task(code_segment_2, data_segment_2, &print_mmu_translation);
+
+    // cout << "Deleting segments from the first fork";
+    // delete cs;
+    // delete ds;
+    // cout << "  done!" << endl;
 
     // @cross
     // a gnete usa isso?

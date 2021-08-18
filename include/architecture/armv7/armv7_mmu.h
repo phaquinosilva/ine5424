@@ -450,7 +450,8 @@ public:
     static Phy_Addr pde2phy(PD_Entry entry) { return (entry & ~Page_Flags::PD_MASK); }
 
     static void flush_tlb() {
-        ASM("mcr   p15, 0, r0, c8, c7, 0");
+        ASM("mcr     p15, 0, r0, c7, c5, 4 \n"
+            "mcrne   p15, 0, r0, c8, c7, 0");
     }
 
     static void flush_tlb(Log_Addr addr) {
