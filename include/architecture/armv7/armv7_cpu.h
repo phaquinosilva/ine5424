@@ -348,11 +348,10 @@ public:
     }
 
     // TLB maintenance operations
-    static void invalidate_tlb() {
-        ASM("mov r0, #0x0               \t\n"
-            "mcr p15, 0, r0, c8, c7, 0  \t\n"
-        ); // TLBIALL - Invalidate entire Unifed TLB
-    }
+
+    static void invalidate_tlb() { ASM("mcr p15, 0, %0, c8, c7, 0" : : "r" (0)); }
+
+    static void invalidate_tlb(Reg r) { ASM("mcr p15, 0, %0, c8, c7, 0" : : "r" (r)); }
 
     static void invalidate_caches() {
         ASM("                  \t\n\
