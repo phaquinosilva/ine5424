@@ -83,11 +83,14 @@ public:
 
     static Log_Addr align_page(const Log_Addr & addr) { return (addr + sizeof(Page) - 1) & ~(sizeof(Page) - 1); }
     static Log_Addr align_directory(const Log_Addr & addr) { return (addr + PT_ENTRIES * sizeof(Page) - 1) &  ~(PT_ENTRIES * sizeof(Page) - 1); }
+
+    static Log_Addr directory_bits(const Log_Addr & addr) { return (addr & ~((1 << DIRECTORY_BITS) - 1)); }
 };
 
 class No_MMU: public MMU_Common<0, 0, 0>
 {
     friend class CPU;
+    friend class Setup;
 
 private:
     typedef Grouping_List<unsigned int> List;

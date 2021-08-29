@@ -15,6 +15,8 @@ int print_mmu_translation()
     cout << "Printing Task MMU Information:" << endl;
 
     Task * this_task = Task::self();
+    cout << "My address space's page directory is located at "
+         << reinterpret_cast<void *>(CPU::pdp()) << "" << endl;
 
     cout << "Printing Code MMU Information:" << endl;
     CPU::Log_Addr current_task_code_init = this_task->code();
@@ -29,11 +31,7 @@ int print_mmu_translation()
 
 int main()
 {    
-    cout << "Fork test" << endl;
-
-    cout << "My address space's page directory is located at "
-         << reinterpret_cast<void *>(CPU::pdp()) << "" << endl;
-    Address_Space self(MMU::current());
+    cout << "Test task context switching at a Thread::dispatch()\n" << endl;
 
     Task * current_task = Task::self();
     cout << "Attaching code segment..." << endl;

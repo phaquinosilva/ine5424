@@ -249,7 +249,7 @@ private:
     void insert(Thread * t) { _threads.insert(new (SYSTEM) Queue::Element(t)); }
     void remove(Thread * t) { Queue::Element * el = _threads.remove(t); if(el) delete el; }
 
-    /* For main Task? */
+    /* For main Task */
     static Task * volatile current() { return _current; }
     static void current(Task * t) { _current = t; }
 

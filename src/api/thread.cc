@@ -349,8 +349,10 @@ void Thread::dispatch(Thread * prev, Thread * next, bool charge)
         }
         db<Thread>(INF) << "Thread::dispatch:next={" << next << ",ctx=" << *next->_context << "}" << endl;
 
-        if(multitask && (next->_task != prev->_task))
+        if(multitask && (next->_task != prev->_task)) {
             next->_task->activate();
+            Task::current(next->_task);
+        }
 
         // The non-volatile pointer to volatile pointer to a non-volatile context is correct
         // and necessary because of context switches, but here, we are locked() and
