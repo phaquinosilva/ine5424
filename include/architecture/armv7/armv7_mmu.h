@@ -263,6 +263,7 @@ public:
         void activate() const { ARMv7_MMU::pd(_pd); }
 
         Log_Addr attach(const Chunk & chunk, unsigned int from = directory(APP_LOW)) {
+            flush_tlb();
             for(unsigned int i = from; i < directory(SYS); i++)
                 if(attach(i, chunk.pt(), chunk.pts(), chunk.flags()))
                     return i << DIRECTORY_SHIFT;
