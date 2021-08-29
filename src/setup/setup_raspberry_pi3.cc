@@ -848,7 +848,7 @@ void _entry()
                                                                                 \t\n\
         reset:          .word _reset                                            \t\n\
         ui:             .word _undefined_instruction                            \t\n\
-        si:             .word _software_interrupt                               \t\n\
+        si:             .word syscalled                                         \t\n\
         pa:             .word _prefetch_abort                                   \t\n\
         da:             .word _data_abort                                       \t\n\
         irq:            .word _int_entry                                        \t\n\
