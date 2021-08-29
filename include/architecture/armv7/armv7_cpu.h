@@ -340,12 +340,6 @@ public:
 
     static void flush_branch_predictors() { ASM("mcr p15, 0, %0, c7, c5, 6" : : "r" (0)); }
 
-    // TLB maintenance operations
-
-    static void flush_tlb() { ASM("mcr p15, 0, %0, c8, c7, 0" : : "r" (0)); }
-
-    static void flush_tlb(Reg r) { ASM("mcr p15, 0, %0, c8, c7, 0" : : "r" (r)); }
-
     static void flush_caches() {
         ASM("                  \t\n\
         // Disable L1 Caches.                                                               \t\n\
@@ -524,6 +518,13 @@ public:
         Context * ctx = new(ksp) Context(entry, exit, usp);
         init_stack_helper(&ctx->_r0, an ...);
         return ctx;
+    }
+    template<typename ... Tn>
+    static Log_Addr init_user_stack(Log_Addr usp, void (* exit)(), Tn ... an) {
+        usp -= sizeof(Context);
+        Context * ctx = new(usp) Context(0, exit, 0);
+        init_stack_helper(&ctx->_r0, an ...);
+        return usp;
     }
 
     static void syscall(void * message);

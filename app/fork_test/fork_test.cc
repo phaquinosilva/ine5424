@@ -15,8 +15,8 @@ int print_mmu_translation()
     cout << "Printing Task MMU Information:" << endl;
 
     Task * this_task = Task::self();
-    cout << "My address space's page directory is located at "
-         << reinterpret_cast<void *>(CPU::pdp()) << "" << endl;
+    // cout << "My address space's page directory is located at "
+        //  << reinterpret_cast<void *>(MMU::pd()) << "" << endl;
 
     cout << "Printing Code MMU Information:" << endl;
     CPU::Log_Addr current_task_code_init = this_task->code();
