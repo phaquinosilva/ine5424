@@ -527,6 +527,17 @@ public:
         return usp;
     }
 
+    template<typename ... Tn>
+    static Log_Addr init_user_stack(Log_Addr sp, void (* exit)(), Tn ... an) {
+        sp -= SIZEOF<Tn ... >::Result;
+        init_stack_helper(sp, an ...);
+        if(exit) {
+            sp -= sizeof(int *);
+            *static_cast<int *>(sp) = Log_Addr(exit);
+        }
+        return sp;
+    }
+
     static void syscall(void * message);
     static void syscalled();
 
