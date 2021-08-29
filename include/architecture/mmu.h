@@ -22,8 +22,8 @@ protected:
 
     // Page constants
     static const unsigned int PAGE_SHIFT = OFFSET_BITS;
-    static const unsigned int DIRECTORY_SHIFT = OFFSET_BITS + PAGE_BITS;
     static const unsigned int PAGE_SIZE = 1 << PAGE_SHIFT;
+    static const unsigned int DIRECTORY_SHIFT = OFFSET_BITS + PAGE_BITS;
 
 public:
     // Memory page
@@ -232,13 +232,16 @@ public:
     static PD_Entry phy2pde(Phy_Addr frame) { return frame; }
     static Phy_Addr pde2phy(PD_Entry entry) { return entry; }
 
-    static void flush_tlb() {}
-    static void flush_tlb(Log_Addr addr) {}
-
     static Log_Addr phy2log(Phy_Addr phy) { return phy; }
     static Phy_Addr log2phy(Log_Addr log) { return log; }
 
 private:
+    static Phy_Addr pd() { return 0; }
+    static void pd(Phy_Addr pd) {}
+
+    static void flush_tlb() {}
+    static void flush_tlb(Log_Addr addr) {}
+
     static void init();
 
 private:

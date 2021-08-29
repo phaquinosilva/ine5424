@@ -89,14 +89,15 @@ public:
         unsigned int _flags;
     };
 
-    // Page_Table
-    class Page_Table
+    // Page_Table and Page_Directory
+    template<unsigned int ENTRIES>
+    class _Page_Table
     {
     public:
-        Page_Table() {}
+        _Page_Table() {}
 
         PT_Entry & operator[](unsigned int i) { return _entry[i]; }
-        Page_Table & log() { return *static_cast<Page_Table *>(phy2log(this)); }
+        _Page_Table & log() { return *static_cast<_Page_Table *>(phy2log(this)); }
 
         void map(int from, int to, Page_Flags flags, Color color) {
             Phy_Addr * addr = alloc(to - from, color);
@@ -130,10 +131,10 @@ public:
             }
         }
 
-        friend OStream & operator<<(OStream & os, Page_Table & pt) {
+        friend OStream & operator<<(OStream & os, _Page_Table & pt) {
             os << "{\n";
             int brk = 0;
-            for(unsigned int i = 0; i < PT_ENTRIES; i++)
+            for(unsigned int i = 0; i < ENTRIES; i++)
                 if(pt[i]) {
                     os << "[" << i << "]=" << pt[i] << "  ";
                     if(!(++brk % 4))
@@ -144,66 +145,11 @@ public:
         }
 
     private:
-        PT_Entry _entry[PT_ENTRIES]; // the Phy_Addr in each entry passed through phy2pte()
+        PT_Entry _entry[ENTRIES]; // the Phy_Addr in each entry passed through phy2pte()
     };
 
-    // Page Directory
-    class Page_Directory 
-    {
-    public:
-        Page_Directory() {}
-
-        PD_Entry & operator[](unsigned int i) { return _entry[i]; }
-        Page_Directory & log() { return *static_cast<Page_Directory *>(phy2log(this)); }
-
-        void map(int from, int to, Page_Flags flags, Color color) {
-            Phy_Addr * addr = alloc(to - from, color);
-            if(addr)
-                remap(addr, from, to, flags);
-            else
-                for( ; from < to; from++) {
-                    Log_Addr * pte = phy2log(&_entry[from]);
-                    *pte = phy2pte(alloc(1, color), flags);
-                }
-        }
-
-        void map_contiguous(int from, int to, Page_Flags flags, Color color) {
-            remap(alloc(to - from, color), from, to, flags);
-        }
-
-        void remap(Phy_Addr addr, int from, int to, Page_Flags flags) {
-            addr = align_page(addr);
-            for( ; from < to; from++) {
-                Log_Addr * pte = phy2log(&_entry[from]);
-                *pte = phy2pte(addr, flags);
-                addr += sizeof(Page);
-            }
-        }
-
-        void unmap(int from, int to) {
-            for( ; from < to; from++) {
-                free(_entry[from]);
-                Log_Addr * pte = phy2log(&_entry[from]);
-                *pte = 0;
-            }
-        }
-
-        friend OStream & operator<<(OStream & os, Page_Directory & pt) {
-            os << "{\n";
-            int brk = 0;
-            for(unsigned int i = 0; i < PD_ENTRIES; i++)
-                if(pt[i]) {
-                    os << "[" << i << "]=" << pt[i] << "  ";
-                    if(!(++brk % 4))
-                        os << "\n";
-                }
-            os << "\n}";
-            return os;
-        }
-
-    private:
-        PD_Entry _entry[PD_ENTRIES]; // the Phy_Addr in each entry passed through phy2pte()
-    };
+    typedef _Page_Table<PT_ENTRIES> Page_Table;
+    typedef _Page_Table<PD_ENTRIES> Page_Directory;
 
     // Chunk (for Segment)
     class Chunk
@@ -286,17 +232,24 @@ public:
         friend class Task;
 
     public:
-        Directory() : _base(calloc(7, WHITE)), _free(true) {
-            // each pd has up to 4096 entries and must be aligned with 16K
-            if (_base & 0x3FFF) {
-                _base = (_base & ~(0x3FFF)) + (0x1 << 14);
+        Directory() : _free(true) {
+            // Page Directories have 4096 32-bit entries and must be aligned to 16Kb, thus, we need 7 frame in the worst case
+            Phy_Addr pd = calloc(sizeof(Page_Directory) / sizeof(Frame) + ((sizeof(Page_Directory) / sizeof(Frame)) - 1), WHITE);
+            unsigned int free_frames = 0;
+            while(pd & (sizeof(Page_Directory) - 1)) { // pd is not aligned to 16 Kb
+                Phy_Addr * tmp = pd;
+                pd += sizeof(Frame); // skip this frame
+                free(tmp); // return this frame to the free list
+                free_frames++;
             }
+            if(free_frames != 3)
+                free(pd + 4 * sizeof(Page), 3 - free_frames); // return exceeding frames at the tail to the free list
 
-            _pd = Phy_Addr(_base);
-            Page_Directory * _master = current();
+            _pd = static_cast<Page_Directory *>(pd);
 
             for(unsigned int i = directory(PHY_MEM); i < directory(APP_LOW); i++)
                 (*_pd)[i] = (*_master)[i];
+            
             for(unsigned int i = directory(SYS); i < PD_ENTRIES; i++)
                 (*_pd)[i] = (*_master)[i];
         }
@@ -496,10 +449,6 @@ public:
     static PD_Entry phy2pde(Phy_Addr frame) { return (frame) | Page_Flags::PD_FLAGS; }
     static Phy_Addr pde2phy(PD_Entry entry) { return (entry & ~Page_Flags::PD_MASK); }
 
-    static void flush_tlb() { CPU::invalidate_tlb(); }
-
-    static void flush_tlb(Log_Addr addr) { CPU::invalidate_tlb(directory_bits(addr)); }
-  
     static Log_Addr phy2log(Phy_Addr phy) { return Log_Addr((RAM_BASE == PHY_MEM) ? phy : (RAM_BASE > PHY_MEM) ? phy - (RAM_BASE - PHY_MEM) : phy + (PHY_MEM - RAM_BASE)); }
     static Phy_Addr log2phy(Log_Addr log) { return Phy_Addr((RAM_BASE == PHY_MEM) ? log : (RAM_BASE > PHY_MEM) ? log + (RAM_BASE - PHY_MEM) : log - (PHY_MEM - RAM_BASE)); }
 
@@ -517,7 +466,10 @@ public:
 
 private:
     static Phy_Addr pd() { return CPU::ttbr0(); }
-    static void pd(Phy_Addr pd) { CPU::ttbr0(pd); CPU::invalidate_tlb(); CPU::isb(); CPU::dsb(); }
+    static void pd(Phy_Addr pd) { CPU::ttbr0(pd); CPU::flush_tlb(); CPU::isb(); CPU::dsb(); }
+
+    static void flush_tlb() { CPU::flush_tlb(); }
+    static void flush_tlb(Log_Addr addr) { CPU::flush_tlb(directory_bits(addr)); } // only bits from 31 to 12, all ASIDs
 
     static void init();
 
