@@ -7,27 +7,15 @@
 // ARCHITECTURE, MACHINE, AND APPLICATION SELECTION
 // This section is generated automatically from makedefs by $EPOS/etc/makefile
 //============================================================================
-<<<<<<< HEAD
-#define SMOD xxx
-#define ARCH xxx
-#define MACH xxx
-#define MMOD xxx
-#define APPL xxx
-#define __mode_xxx__
-#define __arch_xxx__
-#define __mach_xxx__
-#define __mmod_xxx__
-=======
 #define SMOD builtin
 #define ARCH armv7
 #define MACH cortex
 #define MMOD raspberry_pi3
-#define APPL test_syscalls
+#define APPL hello
 #define __mode_builtin__
 #define __arch_armv7__
 #define __mach_cortex__
 #define __mmod_raspberry_pi3__
->>>>>>> ad9bdea... Create initial messaging-stub support
 
 //============================================================================
 // NAMESPACES AND DEFINITIONS
