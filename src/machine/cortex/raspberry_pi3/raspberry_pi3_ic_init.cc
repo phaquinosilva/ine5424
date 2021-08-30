@@ -7,8 +7,7 @@ __BEGIN_SYS
 
 extern "C" { void _int_entry();
              void _undefined_instruction();
-             void CPU::syscalled();
-            //  void _software_interrupt();
+             void _software_interrupt();
              void _prefetch_abort();
              void _data_abort();
              void _reserved();
@@ -34,7 +33,7 @@ void IC::init()
         CPU::Reg32 * handler_entry = reinterpret_cast<CPU::Reg32 *>(0x20);
 
         handler_entry[1] = reinterpret_cast<CPU::Reg32>(_undefined_instruction);
-        handler_entry[2] = reinterpret_cast<CPU::Reg32>(CPU::syscalled);
+        handler_entry[2] = reinterpret_cast<CPU::Reg32>(_software_interrupt);
         handler_entry[3] = reinterpret_cast<CPU::Reg32>(_prefetch_abort);
         handler_entry[4] = reinterpret_cast<CPU::Reg32>(_data_abort);
         handler_entry[5] = reinterpret_cast<CPU::Reg32>(_int_entry);
