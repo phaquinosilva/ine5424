@@ -12,9 +12,13 @@ __BEGIN_SYS
 
 void CPU::syscall(void * message)
 {
+    // TODO @cross: checar se tem coisa faltando pra salvar/carregar contexto
+    ASM("push {lr}\n");
+
     CPU::r0(reinterpret_cast<CPU::Reg>(message));
     ASM("svc   0x0");
-    // CPU::ecall();
+
+    ASM("pop {lr}\n");
 }
 
 __END_SYS

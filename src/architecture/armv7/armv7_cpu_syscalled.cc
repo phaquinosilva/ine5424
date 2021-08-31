@@ -6,26 +6,19 @@ extern "C" { void _exec(void *); }
 
 __BEGIN_SYS
 
-// TODO @cross
-// RETIRADO ORIGINALMENTE DO IA32
-// tem que ver em especifico comofas isso na wiki de syscall acho
-
 void CPU::syscalled()
 {
-    // We get here when an APP triggers INT_SYSCALL with the message address in CX
-    // The CPU saves the user-level stack pointer in the stack and restores the system-level stack pointer also from the TSS
-    // Stack contents at this point are always: ss, esp, eflags, cs, eip
-    // CX holds the pointer to the message
+    // TODO @cross: checar se tem coisa faltando pra salvar/carregar contexto
+    // TODO @cross: esse codigo nao roda, a gente tem que adaptar isso pra Agent e eu nao sei como
+    // Agent agent = Agent(reinterpret_cast<Message*>(CPU::r0()));
 
-    if(Traits<Build>::MODE == Traits<Build>::KERNEL) {
-        // Do the system call by calling _exec with the message pointed by ecx
-        ASM("        push    %ecx                # msg                       \n"
-            "        call    _exec                                           \n"
-            "        pop     %ecx                # clean up                  \n");
+    ASM("push {r1-r12}  \n");
 
-        // Return to user-level
-        ASM("        iret                                                    \n");
-    }
+    // void* ret = handler.act();
+    // CPU::r0(reinterpret_cast<CPU::Reg>(message));
+    CPU::r0();
+
+    ASM("pop {r1-r12}  \n");
 }
 
 __END_SYS

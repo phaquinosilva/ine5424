@@ -22,6 +22,12 @@ int suspended_print() {
 Mutex mut;
 Semaphore sem(2);
 
+int print_echo()
+{
+    cout << "print_echo()" << endl;
+    return 0;
+}
+
 int wait_on_the_mutex() {
     cout << "I gotta go fast!" << endl;
     mut.lock();
@@ -69,46 +75,47 @@ int main()
     mut.unlock();
     t->join();
     
-    Params p0 = Params(0);
-    Params p1 = Params(1);
-    Params p2 = Params(2);
-    Thread * t0 = new Thread(&wait_on_the_semaphore, &p0);
-    Thread * t1 = new Thread(&wait_on_the_semaphore, &p1);
-    Thread * t2 = new Thread(&wait_on_the_semaphore, &p2);    
-    cout << "Let the race begin" << endl;
-    Alarm::delay(3000000);
-    sem.v();
-    t0->join();
-    t1->join();
-    t2->join();
+    // // TODO: @cross adaptar essa treta
+    // Params p0 = Params(0);
+    // Params p1 = Params(1);
+    // Params p2 = Params(2);
+    // Thread * t0 = new Thread(&wait_on_the_semaphore, &p0);
+    // Thread * t1 = new Thread(&wait_on_the_semaphore, &p1);
+    // Thread * t2 = new Thread(&wait_on_the_semaphore, &p2);    
+    // cout << "Let the race begin" << endl;
+    // Alarm::delay(3000000);
+    // sem.v();
+    // t0->join();
+    // t1->join();
+    // t2->join();
 
-    // Test Alarm
-    cout << "Time:" << endl;
-    cout << "   frequency=" << Alarm::alarm_frequency() << endl;
+    // // Test Alarm
+    // cout << "Time:" << endl;
+    // cout << "   frequency=" << Alarm::alarm_frequency() << endl;
 
-    // Test Chronometer
-    cout << "Chronometer:" << endl;
-    Chronometer * chrono = new Chronometer();
+    // // Test Chronometer
+    // cout << "Chronometer:" << endl;
+    // Chronometer * chrono = new Chronometer();
     
-    unsigned long f = chrono->frequency(); //Hertz
-    cout << "frequency = " << f << endl; 
+    // unsigned long f = chrono->frequency(); //Hertz
+    // cout << "frequency = " << f << endl; 
     
-    chrono->start();
-    unsigned long read = chrono->read();
-    cout << "read = " << read << endl;
-    Alarm::delay(1000000);
-    chrono->stop();
-    unsigned long long ts = chrono->ticks(); //Time Stamp
-    cout << "time_stamp = " << ts << endl; //time_stamp is multiplied by ~12
+    // chrono->start();
+    // unsigned long read = chrono->read();
+    // cout << "read = " << read << endl;
+    // Alarm::delay(1000000);
+    // chrono->stop();
+    // unsigned long long ts = chrono->ticks(); //Time Stamp
+    // cout << "time_stamp = " << ts << endl; //time_stamp is multiplied by ~12
     
-    chrono->reset();
-    chrono->start();
-    Alarm::delay(500000);
-    chrono->lap();
-    ts = chrono->ticks(); //Time Stamp
-    cout << "time_stamp = " << ts << endl; //time_stamp is multiplied by ~12
+    // chrono->reset();
+    // chrono->start();
+    // Alarm::delay(500000);
+    // chrono->lap();
+    // ts = chrono->ticks(); //Time Stamp
+    // cout << "time_stamp = " << ts << endl; //time_stamp is multiplied by ~12
     
-    delete chrono;
+    // delete chrono;
     
     // Test Display
     cout << "Display:" << endl;
@@ -131,7 +138,8 @@ int main()
     
     // Test Segment
     cout << "Segment:" << endl;
-    Segment * seg = new Segment(1024, MMU::Flags::ALL);
+    Segment * seg = new Segment(1024);
+    // Segment * seg = new Segment(1024, MMU::Flags::ALL);
     unsigned int seg_size = seg->size();
     cout << "seg_size=" << seg_size << endl;
     CPU::Phy_Addr phy_addr = seg->phy_address();
@@ -146,7 +154,8 @@ int main()
     cout << "MMU::current=" << MMU::current() << "  pd=" << pd << endl;
     
     Address_Space * addr_s2 = new Address_Space();
-    Segment * seg2 = new Segment(1024, MMU::Flags::ALL);
+    Segment * seg2 = new Segment(1024);
+    // Segment * seg2 = new Segment(1024, MMU::Flags::ALL);
     addr_s2->attach(seg2, 0xb0000000);
     
     CPU::Phy_Addr phy_addr2 = seg2->phy_address();
@@ -162,9 +171,11 @@ int main()
     
     // Test Task
     cout << "Task:" << endl;
-    Segment * cs = new Segment(2048, MMU::Flags::ALL);
-    Segment * ds = new Segment(4096, MMU::Flags::ALL);
-    Task * task = new Task(cs, ds);
+    Segment * cs = new Segment(2048);
+    // Segment * cs = new Segment(2048, MMU::Flags::ALL);
+    Segment * ds = new Segment(4096);
+    // Segment * ds = new Segment(4096, MMU::Flags::ALL);
+    Task * task = new Task(cs, ds, &print_echo);
     
     CPU::Log_Addr code = task->code();
     CPU::Log_Addr data = task->data();
