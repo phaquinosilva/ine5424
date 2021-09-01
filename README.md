@@ -57,3 +57,7 @@ See also the list of [contributors](https://epos.lisha.ufsc.br/EPOS+Developers) 
 ## License
 
 This project is licensed under the GPL 2.0 License - see the [LICENSE](LICENSE) file for details
+
+## P3:
+
+We started messing with the syscall and syscalled structure, aswell as setting up the necessary steps to support syscall functions (such as on IC::software_interrupt()). The things we have setted up are compiling, but our tests can demonstrate very little about the functionalities we were supposed to implement. We also tried starting our implementation using epos/framework as basis. While we got to a fair understanding of the funcioning of the syscall procedure, we still failed to derive a structure which we could use to implement our own stubs.
