@@ -8,13 +8,12 @@ __BEGIN_SYS
 
 void CPU::syscalled()
 {
-    // TODO @cross: checar se tem coisa faltando pra salvar/carregar contexto
-    // TODO @cross: esse codigo nao roda, a gente tem que adaptar isso pra Agent e eu nao sei como
+    // TODO checar se tem coisa faltando pra salvar/carregar contexto
+    // TODO esse codigo nao roda, a gente tem que adaptar isso pra Agent e eu nao sei como
     // Agent agent = Agent(reinterpret_cast<Message*>(CPU::r0()));
 
     ASM("push {r1-r12}  \n");
 
-    // void* ret = handler.act();
     // CPU::r0(reinterpret_cast<CPU::Reg>(message));
     CPU::r0();
 

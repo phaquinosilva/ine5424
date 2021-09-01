@@ -5,14 +5,9 @@
 
 __BEGIN_SYS
 
-// TODO @cross
-// ORIGINALMENTE RETIRADO DO rv32
-// ok, essas duas ASM call sao extremamente especificas
-// acho que agora eh a hora que eu vou ler a wiki de syscall e descobrir EAECOMOFAS
-
 void CPU::syscall(void * message)
 {
-    // TODO @cross: checar se tem coisa faltando pra salvar/carregar contexto
+    // TODO: checar se isso é o suficiente pra guardar o contexto
     ASM("push {lr}\n");
 
     CPU::r0(reinterpret_cast<CPU::Reg>(message));
