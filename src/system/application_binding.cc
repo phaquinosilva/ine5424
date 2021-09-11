@@ -4,11 +4,9 @@
 #include <utility/ostream.h>
 #include <architecture/cpu.h>
 #include <system.h>
-#include <framework/main.h>
+#include <stubs/stub_thread.h>
 
-// Framework class attributes
 __BEGIN_SYS
-Framework::Cache Framework::_cache;
 __END_SYS
 
 
@@ -20,8 +18,11 @@ __END_SYS
 
 // Bindings
 extern "C" {
-    void _panic() { _API::Thread::exit(-1); }
-    void _exit(int s) { _API::Thread::exit(s); for(;;); }
+    void _panic() { _API::Stub_Thread::exit(-1); }
+    void _exit(int s) { _API::Stub_Thread::exit(s); for(;;); }
+
+    // TODO @cross: try not to use this
+    // void __exit() { _API::Stub_Thread::exit(_SYS::CPU::fr()); }
 
     // Utility methods that differ from kernel and user space.
     // Heap
@@ -34,7 +35,9 @@ __USING_SYS;
 extern "C" {
     void _syscall(void * m) { CPU::syscall(m); }
     void _print(const char * s) {
-        Message msg(Id(UTILITY_ID, 0), Message::PRINT, reinterpret_cast<unsigned int>(s));
+        // TODO @cross remove this
+        // Message msg(Id(UTILITY_ID, 0), Message::PRINT, reinterpret_cast<unsigned int>(s));
+        Message msg(Message::ENTITY::DISPLAY, Message::PRINT, s);
         msg.act();
     }
 }

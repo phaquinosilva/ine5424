@@ -542,7 +542,8 @@ public:
         init_stack_helper(&ctx->_r0, an ...);
         if(multitask) {
 
-	// handle trampoline context here
+	    // handle trampoline context here
+        // TODO @cross: parece que nao vai nada aqui
 
         }
         return ctx;

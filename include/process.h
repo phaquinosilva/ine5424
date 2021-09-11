@@ -160,6 +160,9 @@ protected:
     Task(Address_Space * as, Segment * cs, Segment * ds, Log_Addr code, Log_Addr data, int (* entry)(Tn ...), Tn ... an)
     : _as(as), _cs(cs), _ds(ds), _code(code), _data(data), _entry(entry) {
         db<Task, Init>(TRC) << "Task(as=" << _as << ",cs=" << _cs << ",ds=" << _ds << ",code=" << _code << ",data=" << _data << ",entry=" << _entry << ") => " << this << endl;
+        lock();
+        _id = _task_count++;
+        unlock();
 
         _current = this;
         activate();
@@ -171,6 +174,9 @@ public:
     Task(Segment * cs, Segment * ds, Log_Addr code, Log_Addr data, int (* entry)(Tn ...), Tn ... an)
     : _as (new (SYSTEM) Address_Space), _cs(cs), _ds(ds), _code(_as->attach(_cs, code)), _data(_as->attach(_ds, data)), _entry(entry) {
         db<Task>(TRC) << "Task(as=" << _as << ",cs=" << _cs << ",ds=" << _ds << ",entry=" << _entry << ",code=" << _code << ",data=" << _data << ") => " << this << endl;
+        lock();
+        _id = _task_count++;
+        unlock();
 
         _main = new (SYSTEM) Thread(Thread::Configuration(Thread::READY, Thread::MAIN, this, 0), entry, an ...);
     }
@@ -179,12 +185,19 @@ public:
     Task(const Thread::Configuration & conf, Segment * cs, Segment * ds, Log_Addr code, Log_Addr data, int (* entry)(Tn ...), Tn ... an)
     : _as (new (SYSTEM) Address_Space), _cs(cs), _ds(ds), _code(_as->attach(_cs, code)), _data(_as->attach(_ds, data)), _entry(entry) {
         db<Task>(TRC) << "Task(as=" << _as << ",cs=" << _cs << ",ds=" << _ds << ",entry=" << _entry << ",code=" << _code << ",data=" << _data << ") => " << this << endl;
+        lock();
+        _id = _task_count++;
+        unlock();
 
         _main = new (SYSTEM) Thread(Thread::Configuration(conf.state, conf.criterion, this, 0), entry, an ...);
     }
     
     template<typename ... Tn>
     Task(Task * task = _current, int (* entry)(Tn ...) = 0, Tn ... an) { // fork-like constructor
+        lock();
+        _id = _task_count++;
+        unlock();
+        
         // Allocate resources
         _as = new (SYSTEM) Address_Space;
         _cs = new (SYSTEM) Segment(task->code_segment()->size(), Segment::Flags::APP);
@@ -236,6 +249,8 @@ public:
 
     static Task * volatile self() { return current(); }
 
+    unsigned int id() {return _id;}
+
 private:
     void activate() const { _current = const_cast<Task *>(this); _as->activate(); }
 
@@ -248,6 +263,7 @@ private:
     static void init();
 
 private:
+    unsigned int _id;
     Address_Space * _as;
     Segment * _cs;
     Segment * _ds;
@@ -258,6 +274,9 @@ private:
     Queue _threads;
 
     static Task * volatile _current;
+
+protected:
+    static volatile unsigned int _task_count;
 };
 
 

@@ -1,7 +1,6 @@
 // EPOS Kernel Binding
 
-#include <framework/main.h>
-#include <framework/agent.h>
+#include <syscall/agent.h>
 
 // Framework class attributes
 __BEGIN_SYS

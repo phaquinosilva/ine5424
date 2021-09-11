@@ -2,8 +2,10 @@
 
 #include <architecture/armv7/armv7_cpu.h>
 
+// TODO @cross: Isso aqui talvez devesse chamar _sysexec
+//      TODO E SE NAO CHAMAR TEM QUE REMOVER DO OUTRO ARQUIVO.
 extern "C" { void _exec(void *); }
-extern "C" { void _software_interrupt() __attribute__ ((alias("_ZN4EPOS1S3CPU9syscalledEv"))); }
+// extern "C" { void _software_interrupt() __attribute__ ((alias("_ZN4EPOS1S3CPU9syscalledEv"))); }
 
 __BEGIN_SYS
 

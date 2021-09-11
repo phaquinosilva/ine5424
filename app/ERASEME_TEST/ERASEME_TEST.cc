@@ -1,6 +1,6 @@
 #include <utility/ostream.h>
-#include <syscall/stub_thread.h>
-#include <syscall/stub_mutex.h>
+#include <stubs/stub_thread.h>
+#include <stubs/stub_mutex.h>
 
 using namespace EPOS;
 

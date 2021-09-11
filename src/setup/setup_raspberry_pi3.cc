@@ -906,14 +906,16 @@ void _entry()
         irq:            .word 0x0                                               \t\n\
         fiq:            .word 0x0                                               ");
 
-        // TODO: @cross essa parte acima existe em contraste a nossa que existe abaixo.
-        // ui:             .word _undefined_instruction                            \t\n\
-        // si:             .word _software_interrupt                               \t\n\
-        // pa:             .word _prefetch_abort                                   \t\n\
-        // da:             .word _data_abort                                       \t\n\
-        // irq:            .word _int_entry                                        \t\n\
-        // fiq:            .word _fiq                                              ");
 }
+/*
+// TODO: @cross essa parte acima existe em contraste a nossa que existe abaixo.
+// ui:             .word _undefined_instruction                            \t\n\
+// si:             .word _software_interrupt                               \t\n\
+// pa:             .word _prefetch_abort                                   \t\n\
+// da:             .word _data_abort                                       \t\n\
+// irq:            .word _int_entry                                        \t\n\
+// fiq:            .word _fiq                                              ");
+*/
 
 void _reset()
 {
