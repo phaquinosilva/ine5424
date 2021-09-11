@@ -5,6 +5,7 @@
 __BEGIN_SYS
 
 // Class attributes
+volatile unsigned int Task::_task_count;
 Task * volatile Task::_current;
 
 
@@ -16,6 +17,10 @@ Task::~Task()
     while(!_threads.empty())
         delete _threads.remove()->object();
 
+    lock();
+    _task_count--;
+    unlock();
+    
     delete _as;
 }
 

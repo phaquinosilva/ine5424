@@ -260,6 +260,9 @@ private:
     static Task * volatile current() { return _current; }
     static void current(Task * t) { _current = t; }
 
+    static void lock() { CPU::int_disable(); }
+    static void unlock() { CPU::int_enable(); }
+    
     static void init();
 
 private:

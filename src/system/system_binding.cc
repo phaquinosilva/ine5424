@@ -3,6 +3,7 @@
 #include <utility/spin.h>
 #include <machine.h>
 #include <process.h>
+#include <syscall/agent.h>
 
 extern "C" {
     __USING_SYS;
