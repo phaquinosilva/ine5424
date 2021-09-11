@@ -327,12 +327,15 @@ template<typename ... Tn>
 inline Thread::Thread(const Configuration & conf, int (* entry)(Tn ...), Tn ... an)
 : _task(conf.task ? conf.task : Task::self()), _state(conf.state), _waiting(0), _joining(0), _link(this, conf.criterion)
 {
-    if(multitask && !conf.stack_size) { // auto-expand, user-level stack
+    constructor_prologue(conf.stack_size);
 
-        // handle user-level stack
+    if(multitask && !conf.stack_size) { // auto-expand, user-level stack
+        // TODO @cross -- sei la to soh marcando que isso é nosso
+        _user_stack = new (SYSTEM) Segment(Traits<Machine>::STACK_SIZE, Segment::Flags::APP);
+        CPU::Log_Addr usp = _task->address_space()->attach(_user_stack);
+        _context = CPU::init_user_stack(usp + Traits<Machine>::STACK_SIZE, _stack + Traits<Machine>::STACK_SIZE, &__exit, entry, an ...);
 
     } else { // single-task scenarios and idle thread, which is a kernel thread, don't have a user-level stack
-        constructor_prologue(conf.stack_size);
         _user_stack = 0;
         _context = CPU::init_stack(0, _stack + conf.stack_size, &__exit, entry, an ...);
     }

@@ -488,8 +488,7 @@ public:
         // Context(Log_Addr entry, Log_Addr exit, Log_Addr usp): Base::Context(entry, exit, usp) {}
 
         // Need to be a FLAG_USER when isnt a system
-        Context(Log_Addr  entry, Log_Addr exit, Log_Addr usp, bool is_system)
-        :_usp(usp), _flags((is_system? FLAG_SVC : FLAG_SVC)), _lr(exit | (thumb ? 1 : 0)), _pc(entry | (thumb ? 1 : 0)) {
+        Context(Log_Addr  entry, Log_Addr exit, Log_Addr usp, bool is_system):_usp(usp), _flags((is_system? FLAG_SVC : FLAG_SVC)), _lr(exit | (thumb ? 1 : 0)), _pc(entry | (thumb ? 1 : 0)) {
             if(Traits<Build>::hysterically_debugged || Traits<Thread>::trace_idle) {
                 _r0 = 0; _r1 = 1; _r2 = 2; _r3 = 3; _r4 = 4; _r5 = 5; _r6 = 6; _r7 = 7; _r8 = 8; _r9 = 9; _r10 = 10; _r11 = 11; _r12 = 12;
             }
