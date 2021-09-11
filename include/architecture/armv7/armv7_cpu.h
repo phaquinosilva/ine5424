@@ -29,11 +29,19 @@ public:
     {
     public:
         Context() {}
+
         Context(Log_Addr usp, Log_Addr ulr, Reg flags, Log_Addr  lr, Log_Addr pc): _usp(usp), _ulr(ulr), _flags(flags), _lr(lr), _pc(pc) {
             if(Traits<Build>::hysterically_debugged || Traits<Thread>::trace_idle) {
                 _r0 = 0; _r1 = 1; _r2 = 2; _r3 = 3; _r4 = 4; _r5 = 5; _r6 = 6; _r7 = 7; _r8 = 8; _r9 = 9; _r10 = 10; _r11 = 11; _r12 = 12;
             }
         }
+        // // TODO @cross check this copypasta
+        // // Need to be a FLAG_USER when isnt a system
+        // Context(Log_Addr  entry, Log_Addr exit, Log_Addr usp, bool is_system):_usp(usp), _flags((is_system? FLAG_SVC : FLAG_SVC)), _lr(exit | (thumb ? 1 : 0)), _pc(entry | (thumb ? 1 : 0)) {
+        //     if(Traits<Build>::hysterically_debugged || Traits<Thread>::trace_idle) {
+        //         _r0 = 0; _r1 = 1; _r2 = 2; _r3 = 3; _r4 = 4; _r5 = 5; _r6 = 6; _r7 = 7; _r8 = 8; _r9 = 9; _r10 = 10; _r11 = 11; _r12 = 12;
+        //     }
+        // }
 
     public:
         Reg _usp;     // usp (only used in multitasking)
@@ -470,7 +478,22 @@ public:
     {
     public:
         Context() {}
-        Context(Log_Addr entry, Log_Addr exit, Log_Addr usp): Base::Context(entry, exit, usp) {}
+        // TODO @cross ta aqui op guto ta buxando de base context
+        //          mas parece que a gente realmente precisa algo flexivel aqui
+        //          eu vou copiar primeiro a versao dos guri com o jose soh pra ver
+
+        // ver: quem sera que usa esse diabo? ta publico meu deus
+
+        // // versao guto
+        // Context(Log_Addr entry, Log_Addr exit, Log_Addr usp): Base::Context(entry, exit, usp) {}
+
+        // Need to be a FLAG_USER when isnt a system
+        Context(Log_Addr  entry, Log_Addr exit, Log_Addr usp, bool is_system)
+        :_usp(usp), _flags((is_system? FLAG_SVC : FLAG_SVC)), _lr(exit | (thumb ? 1 : 0)), _pc(entry | (thumb ? 1 : 0)) {
+            if(Traits<Build>::hysterically_debugged || Traits<Thread>::trace_idle) {
+                _r0 = 0; _r1 = 1; _r2 = 2; _r3 = 3; _r4 = 4; _r5 = 5; _r6 = 6; _r7 = 7; _r8 = 8; _r9 = 9; _r10 = 10; _r11 = 11; _r12 = 12;
+            }
+        }
 
         void save() volatile  __attribute__ ((naked));
         void load() const volatile;
@@ -499,6 +522,25 @@ public:
                << "}" << dec;
             return db;
         }
+
+    public:
+        Reg _usp;
+        Reg _flags;
+        Reg _r0;
+        Reg _r1;
+        Reg _r2;
+        Reg _r3;
+        Reg _r4;
+        Reg _r5;
+        Reg _r6;
+        Reg _r7;
+        Reg _r8;
+        Reg _r9;
+        Reg _r10;
+        Reg _r11;
+        Reg _r12;
+        Reg _lr;
+        Reg _pc;
     };
 
 public:
@@ -538,20 +580,44 @@ public:
     template<typename ... Tn>
     static Context * init_stack(Log_Addr usp, Log_Addr ksp, void (* exit)(), int (* entry)(Tn ...), Tn ... an) {
         ksp -= sizeof(Context);
-        Context * ctx = new(ksp) Context(entry, exit, usp); // init_stack is called with usp = 0 for kernel threads
+        Context * ctx = new(ksp) Context(entry, exit, usp, true);
         init_stack_helper(&ctx->_r0, an ...);
-        if(multitask) {
-
-	    // handle trampoline context here
-        // TODO @cross: parece que nao vai nada aqui
-
-        }
         return ctx;
     }
 
-    // In ARMv7, the main thread of each task gets parameters over registers, not the stack, and they are initialized by init_stack.
     template<typename ... Tn>
-    static Log_Addr init_user_stack(Log_Addr usp, void (* exit)(), Tn ... an) { return usp; }
+    static Context * init_user_stack(Log_Addr usp, Log_Addr ksp, void (* exit)(), int (* entry)(Tn ...), Tn ... an) {
+        ksp -= sizeof(Context);
+        Context * ctx = new(ksp) Context(entry, exit, usp, false);
+        init_stack_helper(&ctx->_r0, an ...);
+        return ctx;
+    }
+
+    // template<typename ... Tn>
+    // static Context * init_stack(Log_Addr usp, Log_Addr ksp, void (* exit)(), int (* entry)(Tn ...), Tn ... an) {
+    //     ksp -= sizeof(Context);
+    //     Context * ctx = new(ksp) Context(entry, exit, usp); // init_stack is called with usp = 0 for kernel threads
+
+    //     // TODO @cross: Erase this - versao dos guri
+    //     // Context * ctx = new(ksp) Context(entry, exit, usp, false);
+
+    //     // se eh substituido aqui vamo ve o qq isso faz
+    //     init_stack_helper(&ctx->_r0, an ...);
+    //     if(multitask) {
+
+	//     // handle trampoline context here
+    //     // TODO @cross: parece que nao vai nada aqui
+
+    //         // Reg _usp;     // usp (only used in multitasking)
+    //         // Reg _ulr;     // ulr (only used in multitasking)
+
+    //     }
+    //     return ctx;
+    // }
+
+    // // In ARMv7, the main thread of each task gets parameters over registers, not the stack, and they are initialized by init_stack.
+    // template<typename ... Tn>
+    // static Log_Addr init_user_stack(Log_Addr usp, void (* exit)(), Tn ... an) { return usp; }
 
     static void syscall(void * message);
     static void syscalled();
