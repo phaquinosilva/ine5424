@@ -57,3 +57,13 @@ See also the list of [contributors](https://epos.lisha.ufsc.br/EPOS+Developers) 
 ## License
 
 This project is licensed under the GPL 2.0 License - see the [LICENSE](LICENSE) file for details
+
+
+## How to run app_loader
+
+make APPLICATION=hello_fork <all optional>
+make APPLICATION=app_loader <all optional>
+./bin/eposmkbi . ./img/loader.img ./img/app_loader ./img/hello_fork
+/usr/bin/arm-none-eabi-objcopy -O binary img/loader.img img/app_loader.bin
+
+make APPLICATION=app_loader <run / debug>

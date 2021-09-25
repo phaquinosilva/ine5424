@@ -370,8 +370,8 @@ lib%.o: lib%.cc
 		$(CLEAN) $<.tmp
 
 %.bin: %.img
-		cp $< loader.img
-		$(OBJCOPY) -O binary $< $@
+		# cp $< loader.img
+		# $(OBJCOPY) -O binary $< $@
 
 %.out: %.img
 		$(EMULATOR) $< | $(TEE) $@
