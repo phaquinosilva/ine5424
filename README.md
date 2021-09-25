@@ -67,3 +67,12 @@ make APPLICATION=app_loader <all optional>
 /usr/bin/arm-none-eabi-objcopy -O binary img/loader.img img/app_loader.bin
 
 make APPLICATION=app_loader <run / debug>
+
+#### Extras:
+
+- Remember to check if qemu has other processes running sometimes
+    - ps -ef | rg qemu
+    - killall qemu-system-aarch64
+
+- If things are going south remove your previous binaries and start again
+    (there are name clashes)
