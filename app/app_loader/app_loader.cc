@@ -27,8 +27,8 @@ int main(int argc, char ** argv)
     // int * extras = static_cast<int*>(MMU::align_page(end) + Application::HEAP_SIZE);
     
     unsigned HEAP_SIZE = 16 * 1024;
-    unsigned end = (unsigned)MMU::align_page(&argv);
-    int * extras = static_cast<int*>(MMU::align_page(end) + HEAP_SIZE);
+    unsigned end = (unsigned) _SYS::MMU::align_page(&argv);
+    int * extras = static_cast<int*>(_SYS::MMU::align_page(end) + HEAP_SIZE);
     // cout << "end=" << end << endl;
     // cout << "Extras is located at addr=" << extras << endl;
 
