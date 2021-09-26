@@ -165,6 +165,15 @@ protected:
     }
 
 public:
+    Task(Address_Space * as, Segment * cs, Segment * ds, int (* entry)(), const Log_Addr & code, const Log_Addr & data)
+    : _as(as), _cs(cs), _ds(ds), _entry(entry), _code(code), _data(data) {
+        db<Task, Init>(TRC) << "Task(as=" << _as << ",cs=" << _cs << ",ds=" << _ds << ",entry=" << _entry << ",code=" << _code << ",data=" << _data << ") => " << this << endl;
+        lock();
+        _id = _task_count++;
+        unlock();
+        _main = new (SYSTEM) Thread(Thread::Configuration(Thread::READY, Thread::MAIN, Traits<Application>::STACK_SIZE, this), entry);
+    }
+
     template<typename ... Tn>
     Task(Segment * cs, Segment * ds, int (* entry)(Tn ...), const Log_Addr & code, const Log_Addr & data, Tn ... an)
     : _as (new (SYSTEM) Address_Space), _cs(cs), _ds(ds), _entry(entry), _code(_as->attach(_cs, code)), _data(_as->attach(_ds, data)) {
