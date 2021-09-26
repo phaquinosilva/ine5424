@@ -23,7 +23,7 @@ using namespace EPOS::S::U;
 
 // Constants
 const unsigned int TOKENS = 31;
-const unsigned int COMPONENTS = 62;
+const unsigned int COMPONENTS = 63;
 const unsigned int STRING_SIZE = 128;
 
 // Configuration tokens (integer tokens first, marked by INT_TOKENS)
@@ -106,6 +106,7 @@ char components[COMPONENTS][STRING_SIZE] = {
     "Scheduler",
     "Address_Space",
     "Segment",
+    "Shared_Segment",
     "Synchronizer",
     "Mutex",
     "Semaphore",
@@ -380,33 +381,34 @@ void populate_strings()
     if(Traits<Ethernet_NIC>::enabled)   enable_component("Ethernet_NIC");
 
     // Enabled components
-    if(Traits<System>::enabled)         enable_component("System");
-    if(Traits<Application>::enabled)    enable_component("Application");
-    if(Traits<Thread>::enabled)         enable_component("Thread");
-    if(Traits<Active>::enabled)         enable_component("Active");
-    if(Traits<Periodic_Thread>::enabled)enable_component("Periodic_Thread");
-    if(Traits<RT_Thread>::enabled)      enable_component("RT_Thread");
-    if(Traits<Task>::enabled)           enable_component("Task");
-    if(Traits<Scheduler<Thread>>::enabled)      enable_component("Scheduler");
-    if(Traits<Address_Space>::enabled)  enable_component("Address_Space");
-    if(Traits<Segment>::enabled)        enable_component("Segment");
-    if(Traits<Synchronizer>::enabled)   enable_component("Synchronizer");
-    if(Traits<Mutex>::enabled)          enable_component("Mutex");
-    if(Traits<Semaphore>::enabled)      enable_component("Semaphore");
-    if(Traits<Condition>::enabled)      enable_component("Condition");
-    if(Traits<Clock>::enabled)          enable_component("Clock");
-    if(Traits<Chronometer>::enabled)    enable_component("Chronometer");
-    if(Traits<Alarm>::enabled)          enable_component("Alarm");
-    if(Traits<Delay>::enabled)          enable_component("Delay");
-    if(Traits<Network>::enabled)        enable_component("Network");
-    if(Traits<TSTP>::enabled)           enable_component("TSTP");
-    if(Traits<IP>::enabled)             enable_component("IP");
-    if(Traits<ICMP>::enabled)           enable_component("ICMP");
-    if(Traits<UDP>::enabled)            enable_component("UDP");
-    if(Traits<TCP>::enabled)            enable_component("TCP");
-    if(Traits<DHCP>::enabled)           enable_component("DHCP");
-    if(Traits<IPC>::enabled)            enable_component("IPC");
-    if(Traits<SmartData>::enabled)      enable_component("SmartData");
+    if(Traits<System>::enabled)             enable_component("System");
+    if(Traits<Application>::enabled)        enable_component("Application");
+    if(Traits<Thread>::enabled)             enable_component("Thread");
+    if(Traits<Active>::enabled)             enable_component("Active");
+    if(Traits<Periodic_Thread>::enabled)    enable_component("Periodic_Thread");
+    if(Traits<RT_Thread>::enabled)          enable_component("RT_Thread");
+    if(Traits<Task>::enabled)               enable_component("Task");
+    if(Traits<Scheduler<Thread>>::enabled)  enable_component("Scheduler");
+    if(Traits<Address_Space>::enabled)      enable_component("Address_Space");
+    if(Traits<Segment>::enabled)            enable_component("Segment");
+    if(Traits<Shared_Segment>::enabled)     enable_component("Shared_Segment");
+    if(Traits<Synchronizer>::enabled)       enable_component("Synchronizer");
+    if(Traits<Mutex>::enabled)              enable_component("Mutex");
+    if(Traits<Semaphore>::enabled)          enable_component("Semaphore");
+    if(Traits<Condition>::enabled)          enable_component("Condition");
+    if(Traits<Clock>::enabled)              enable_component("Clock");
+    if(Traits<Chronometer>::enabled)        enable_component("Chronometer");
+    if(Traits<Alarm>::enabled)              enable_component("Alarm");
+    if(Traits<Delay>::enabled)              enable_component("Delay");
+    if(Traits<Network>::enabled)            enable_component("Network");
+    if(Traits<TSTP>::enabled)               enable_component("TSTP");
+    if(Traits<IP>::enabled)                 enable_component("IP");
+    if(Traits<ICMP>::enabled)               enable_component("ICMP");
+    if(Traits<UDP>::enabled)                enable_component("UDP");
+    if(Traits<TCP>::enabled)                enable_component("TCP");
+    if(Traits<DHCP>::enabled)               enable_component("DHCP");
+    if(Traits<IPC>::enabled)                enable_component("IPC");
+    if(Traits<SmartData>::enabled)          enable_component("SmartData");
 }
 
 // Sets the value of a token if it exists

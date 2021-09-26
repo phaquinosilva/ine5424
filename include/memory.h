@@ -7,6 +7,32 @@
 
 __BEGIN_SYS
 
+class Shared_Segment_Port
+{
+public:
+    Shared_Segment_Port(unsigned int p, Shared_Segment * s) : port(p), sseg(s) {}
+    unsigned int port;
+    Shared_Segment * sseg;
+};
+
+class Shared_Segment: public Segment
+{
+private:
+    typedef MMU::Chunk Chunk;
+
+public:
+    typedef Port_List<Shared_Segment_Port> List;
+    typedef CPU::Phy_Addr Phy_Addr;
+    typedef MMU::Flags Flags;
+
+public:
+    Shared_Segment(unsigned int port, unsigned int bytes, const Flags & flags);
+    static Shared_Segment * get_sseg(unsigned int port);
+    static List _list;
+    unsigned int _tasks;
+    unsigned int _port;
+};
+
 class Address_Space: MMU::Directory
 {
     friend class Init_System;   // for Address_Space(pd)

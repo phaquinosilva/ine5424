@@ -116,6 +116,7 @@ class EA_PEDF;
 
 class Address_Space;
 class Segment;
+class Shared_Segment;
 
 class Synchronizer;
 class Mutex;
