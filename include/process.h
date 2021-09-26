@@ -54,6 +54,7 @@ public:
         NORMAL  = Criterion::NORMAL,
         LOW     = Criterion::LOW,
         MAIN    = Criterion::MAIN,
+        LOADER  = Criterion::LOADER,
         IDLE    = Criterion::IDLE
     };
 

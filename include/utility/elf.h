@@ -23,7 +23,7 @@ public:
     int segments() { return e_phnum; }
 
     Elf32_Word segment_type(int i) {
- 	return (i > segments()) ? PT_NULL : seg(i)->p_type;
+ 	    return (i > segments()) ? PT_NULL : seg(i)->p_type;
     }
 
     Elf32_Addr segment_address(int i) {

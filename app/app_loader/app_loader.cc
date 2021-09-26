@@ -18,7 +18,7 @@ int main(int argc, char ** argv)
     cout << "======= ESSE EH O ARGV DA MASSA =======" << "\n";
     cout << argv << "\n";
 
-    cout << "Loading beginned" << endl;
+    cout << "Loading begins" << endl;
     cout << "" << endl;
     cout << "" << endl;
     cout << "" << endl;
@@ -27,8 +27,11 @@ int main(int argc, char ** argv)
     // int * extras = static_cast<int*>(MMU::align_page(end) + Application::HEAP_SIZE);
     
     unsigned HEAP_SIZE = 16 * 1024;
+    cout << "argv = " << argv << endl;
     unsigned end = (unsigned) _SYS::MMU::align_page(&argv);
+    cout << "End = " << end << endl;
     int * extras = static_cast<int*>(_SYS::MMU::align_page(end) + HEAP_SIZE);
+    cout << "Extras located at" << extras << endl;
     // cout << "end=" << end << endl;
     // cout << "Extras is located at addr=" << extras << endl;
 
@@ -36,13 +39,31 @@ int main(int argc, char ** argv)
     // for (int app_size = *extras; app_size; extras += app_size/4, app_size = *reinterpret_cast<int*>(extras)) {
     // while
 
-    
     ELF * app_elf = reinterpret_cast<ELF *>(++extras);
-    if (!app_elf->valid()) {
-        cout << "Skipping corrupted App" << endl;
-    } else {
+    cout << "D" << endl;
+
+    ASM("bolovo:");
+    if (app_elf->valid()) {
         cout << "This Elf was actually valid :D !" << endl;
+    } else {
+        cout << "Skipping corrupted App" << endl;
     }
+
+
+    // for (int app_size = *reinterpret_cast<int*>(extras); 
+    //         app_size; 
+    //         extras += app_size/4, app_size = *reinterpret_cast<int*>(extras)) {
+    //     ELF * app_elf = reinterpret_cast<ELF *>(++extras);
+    //     if (!app_elf->valid()) {
+    //         cout << "Skipping corrupted App" << endl;
+    //         continue;
+    //     } else {
+    //         cout << "This Elf was actually valid :D !" << endl;
+    //     }
+
+
+
+
     cout << "" << endl;
     cout << "" << endl;
     cout << "" << endl;
