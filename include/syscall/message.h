@@ -13,6 +13,7 @@ class Message
 {
 public:
     enum {
+        LOADER_NEW_APP,
         DO_FORK,
         PRINT,
         DELETE,
@@ -105,6 +106,7 @@ public:
         CHRONOMETER_READ,
     };
     enum ENTITY {
+        LOADER,
         FORK,
         DISPLAY,
         THREAD,

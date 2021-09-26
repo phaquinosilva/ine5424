@@ -57,3 +57,22 @@ See also the list of [contributors](https://epos.lisha.ufsc.br/EPOS+Developers) 
 ## License
 
 This project is licensed under the GPL 2.0 License - see the [LICENSE](LICENSE) file for details
+
+
+## How to run app_loader
+
+make APPLICATION=hello_fork <all optional>
+make APPLICATION=app_loader <all optional>
+./bin/eposmkbi . ./img/loader.img ./img/app_loader ./img/hello_fork
+/usr/bin/arm-none-eabi-objcopy -O binary img/loader.img img/app_loader.bin
+
+make APPLICATION=app_loader <run / debug>
+
+#### Extras:
+
+- Remember to check if qemu has other processes running sometimes
+    - ps -ef | rg qemu
+    - killall qemu-system-aarch64
+
+- If things are going south remove your previous binaries and start again
+    (there are name clashes)
