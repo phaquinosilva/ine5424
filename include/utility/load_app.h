@@ -39,7 +39,8 @@ int load_app(int off_set, unsigned int addr) {
             if(app_elf->segment_type(i) != PT_LOAD)
                 continue;
             // if(app_elf->segment_address(i) < app_data)
-            //     app_data = app_elf->segment_address(i);
+            if(app_data == ~0U)
+                app_data = app_elf->segment_address(i);
             app_data_size += app_elf->segment_size(i);
         }
     }
