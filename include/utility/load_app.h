@@ -23,9 +23,9 @@ int load_app(int off_set, unsigned int addr) {
     unsigned int app_data_size = 0;
 
     if(!app_elf->valid()) {
-        db<Thread>(ERR) << "APP ELF image is corrupted!" << endl;
+        db<Task>(TRC) << "APP ELF image is corrupted!" << endl;
     } else {
-        db<Thread>(ERR) << "We good" << endl;
+        db<Task>(TRC) << "We good" << endl;
     }
 
     entry = app_elf->entry();
@@ -33,7 +33,12 @@ int load_app(int off_set, unsigned int addr) {
     if(app_code != MMU::align_directory(app_code)) {
         Machine::panic();
     }
+
+    db<Task>(TRC) << "app code :" << hex << app_code << endl;
+
     app_code_size = app_elf->segment_size(0);
+
+    // if this has data segment
     if(app_elf->segments() > 1) {
         for(int i = 1; i < app_elf->segments(); i++) {
             if(app_elf->segment_type(i) != PT_LOAD)
@@ -45,10 +50,13 @@ int load_app(int off_set, unsigned int addr) {
         }
     }
 
+    db<Task>(TRC) << "LINE 52 - app_data_size :" << hex << app_data_size << endl;
+
     // TODO @cross this might be very wrong because app_data never changes
     if(app_data == ~0U) {
         db<Setup>(WRN) << "APP ELF image has no data segment!" << endl;
-        app_data = MMU::align_page(Memory_Map::APP_DATA);
+        app_data = MMU::align_page(Memory_Map::APP_DATA); 
+        // app_data += MMU::align_page(Traits<Application>::HEAP_SIZE);
     }
     if(Traits<System>::multiheap) { // Application heap in data segment
         app_data_size = MMU::align_page(app_data_size);
@@ -71,13 +79,16 @@ int load_app(int off_set, unsigned int addr) {
 
     // cout << "Attaching data segment..." << endl;
     CPU::int_disable();
-    Log_Addr code = Task::self()->address_space()->attach(cs);
-    Log_Addr data = Task::self()->address_space()->attach(ds);
+    Log_Addr code = Task::self()->address_space()->attach(cs); // o prox endereço eh 0x8020
+    Log_Addr data = Task::self()->address_space()->attach(ds); // 0 1 --> 2 3
     CPU::int_enable();
+    
+    // aqui eh hora de copiar entao tem que ser igual da task que ta rodando
+    //      mas dps a gente quer nos outros lugarex 0x8000 e 0x8040
 
     // app_code = app_elf->segment_address(0);
 
-    if(app_elf->load_segment(0, code) < 0) {
+    if(app_elf->load_segment(0, code) < 0) { // 0x8020
         db<Setup>(ERR) << "Application code segment was corrupted during SETUP!" << endl;
         Machine::panic();
     }
@@ -92,19 +103,11 @@ int load_app(int off_set, unsigned int addr) {
     Task::self()->address_space()->detach(cs);
     Task::self()->address_space()->detach(ds);
 
+    db<Task>(TRC) << "app_code_size :" << hex << app_code_size << endl;
+    db<Task>(TRC) << "app_data_size :" << hex << app_data_size << endl;
+    db<Task>(TRC) << "HEAP_SIZE :" << hex << Traits<Application>::HEAP_SIZE << endl;
 
-    /*
-        Depois disso fazer detach da task corrente 
-            e então fazer attach no address space da task nova. 
-            
-            // TODO
-        Para os dados lembre-se de iterar o endereço de acordo 
-            com o tamanho dos segmentos para não haver sobreposição na carga.
-    */
-
-
-    // new (SYSTEM) Task(as, cs, ds, main, code, data);
-    new (SYSTEM) Task(cs, ds, main, code, data);
+    new (SYSTEM) Task(cs, ds, main, app_code, app_data);
 
 
     db<Task>(ERR) << "************End::Load_app:************" << endl;
