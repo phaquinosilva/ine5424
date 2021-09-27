@@ -22,9 +22,6 @@ int main()
     // TODO resolver com argc e argv esse port
     unsigned int port = 1;
 
-    // TODO colocar flag APPD    
-    // Shared_Segment_Stub * sseg = new Shared_Segment_Stub(port, 1024, MMU::Flags::APPD);
-
     // Criar shared segment stub
     Stub_Shared_Segment * sseg = new Stub_Shared_Segment(port, 1024);
     
