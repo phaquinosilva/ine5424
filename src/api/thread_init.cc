@@ -13,7 +13,7 @@ void Thread::init()
 {
     db<Init, Thread>(TRC) << "Thread::init()" << endl;
 
-    typedef int (Main)(int argc, char * argv[]);
+    typedef int (Main)(int argc, char ** argv);
 
     System_Info * si = System::info();
     Main * main;

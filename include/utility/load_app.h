@@ -66,8 +66,8 @@ int load_app(int off_set, unsigned int addr) {
 
 
     // Address_Space* as = new (SYSTEM) Address_Space(MMU::current());
-    Segment* cs = new (SYSTEM) Segment(Log_Addr(app_code), app_code_size, Segment::Flags::APPC);
-    Segment* ds = new (SYSTEM) Segment(Log_Addr(app_data), app_data_size, Segment::Flags::APPD);
+    Segment* cs = new (SYSTEM) Segment(Log_Addr(app_code), app_code_size, Segment::Flags::APP);
+    Segment* ds = new (SYSTEM) Segment(Log_Addr(app_data), app_data_size, Segment::Flags::APP);
 
     // cout << "Attaching data segment..." << endl;
     CPU::int_disable();
