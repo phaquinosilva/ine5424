@@ -57,3 +57,28 @@ See also the list of [contributors](https://epos.lisha.ufsc.br/EPOS+Developers) 
 ## License
 
 This project is licensed under the GPL 2.0 License - see the [LICENSE](LICENSE) file for details
+
+# P5:
+
+## How to run app_loader
+
+make APPLICATION=hello <all optional>
+make APPLICATION=app_loader <all optional>
+./bin/eposmkbi . ./img/loader.img ./img/app_loader ./img/hello
+/usr/bin/arm-none-eabi-objcopy -O binary img/loader.img img/app_loader.bin
+
+make APPLICATION=app_loader <run / debug>
+
+But we've made that available on the execute_app_loader.sh script
+
+## app_loader status:
+
+Appears to be working.
+
+## IPC status:
+
+The solution seems on the right path, but there were a lot of weird errors.
+
+The apps sseg_writer and sseg_reader where meant to be the proof of concept,
+    we were able to build the classes, syscall and messaging that deals with the
+    shared segment stuff.

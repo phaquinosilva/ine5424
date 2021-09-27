@@ -13,6 +13,8 @@
 #include <synchronizer.h>
 #include <time.h>
 #include <utility/fork.h>
+#include <utility/load_app.h>
+
 
 __BEGIN_SYS
 
@@ -26,6 +28,9 @@ public:
     }
     void exec() {
         switch(entity()) {
+            case Message::ENTITY::LOADER:
+                handle_loader();
+                break;
             case Message::ENTITY::FORK:
                 handle_fork();
                 break;
@@ -65,12 +70,62 @@ public:
             case Message::ENTITY::CHRONOMETER:
                 handle_chronometer();
                 break;
+            case Message::ENTITY::SHARED_SEGMENT:
+                handle_shared_segment();
+                break;
             default:
                 break;
         }
     }
 
 private:
+
+    void handle_shared_segment() {
+        switch(method()) {
+            case Message::SHARED_SEGMENT_GET_SSEG: {
+                Shared_Segment * res;
+                unsigned int port;
+                get_params(port);
+                res = Shared_Segment::get_sseg(port);
+                db<Agent>(ERR) << "Fim get sseg" << endl;
+                result(reinterpret_cast<int>(res));
+            } break;
+            case Message::SHARED_SEGMENT_CREATE: {
+                unsigned int port, bytes;
+                Segment::Flags flags;
+                get_params(port,bytes,flags);
+
+                Shared_Segment * res = Shared_Segment::get_sseg(port);
+
+                if (!res) {
+                    res = new (SYSTEM) Shared_Segment(port,bytes,flags);
+                }
+                
+                db<Agent>(ERR) << "Fim sseg create" << endl;
+                result(reinterpret_cast<int>(res));
+            } break;
+            default:
+                db<Agent>(ERR) << "ENTITY DEFAULT" << endl;
+                break;
+        }
+    }
+    void handle_loader() {
+        switch(method()) {
+            case Message::LOADER_NEW_APP: {
+                int off_set, res;
+                unsigned int addr;
+                get_params(off_set, addr);
+                res = load_app(off_set, addr);
+                db<Agent>(ERR) << "Fim load app" << endl;
+
+                result(res);
+            } break;
+            default:
+                db<Agent>(ERR) << "ENTITY DEFAULT" << endl;
+                break;
+        }
+    }
+
     void handle_fork() {
         switch(method()) {
             case Message::DO_FORK: {

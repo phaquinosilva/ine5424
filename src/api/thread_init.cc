@@ -13,7 +13,7 @@ void Thread::init()
 {
     db<Init, Thread>(TRC) << "Thread::init()" << endl;
 
-    typedef int (Main)();
+    typedef int (Main)(int argc, char ** argv);
 
     System_Info * si = System::info();
     Main * main;
@@ -36,12 +36,22 @@ void Thread::init()
         Log_Addr data = si->lm.app_data;
         //Log_Addr code = as->attach(cs);
         //Log_Addr data = as->attach(ds);
-        new (SYSTEM) Task(as, cs, ds, main, code, data);
+
+        int argc = static_cast<int>(si->lm.app_extra_size);
+        char ** argv = reinterpret_cast<char **>(si->lm.app_extra);
+
+        // TODO @cross: mas ai ele soh aceita se tiver argc e argv agora?
+        //              bom, imagino que ele só passa zero no argc e argv aqui e dane-se
+        new (SYSTEM) Task(as, cs, ds, main, code, data, argc, argv);
+
+        if(si->lm.has_ext)
+            db<Init>(INF) << "Thread::init: additional data from mkbi at "  << reinterpret_cast<void *>(si->lm.app_extra) << ":" << si->lm.app_extra_size << endl;
     }
     else {
         new (SYSTEM) Thread(Thread::Configuration(Thread::RUNNING, Thread::MAIN), reinterpret_cast<int (*)()>(main));
     }
 
+    // @cross como que faz sentido criar mais uma thread aqui??
     // Idle thread creation does not cause rescheduling (see Thread::constructor_epilogue)
     new (SYSTEM) Thread(Thread::Configuration(Thread::READY, Thread::IDLE), &Thread::idle);
 

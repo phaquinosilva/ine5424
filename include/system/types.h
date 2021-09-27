@@ -165,6 +165,7 @@ enum
     ACTIVE_ID,
     ADDRESS_SPACE_ID,
     SEGMENT_ID,
+    SHARED_SEGMENT_ID,
     MUTEX_ID,
     SEMAPHORE_ID,
     CONDITION_ID,
@@ -228,6 +229,7 @@ template<> struct Type<Task> { static const Type_Id ID = TASK_ID; };
 
 template<> struct Type<Address_Space> { static const Type_Id ID = ADDRESS_SPACE_ID; };
 template<> struct Type<Segment> { static const Type_Id ID = SEGMENT_ID; };
+template<> struct Type<Shared_Segment> { static const Type_Id ID = SHARED_SEGMENT_ID; };
 
 template<> struct Type<Mutex> { static const Type_Id ID = MUTEX_ID; };
 template<> struct Type<Semaphore> { static const Type_Id ID = SEMAPHORE_ID; };
