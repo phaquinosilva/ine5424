@@ -278,6 +278,7 @@ void IC::prefetch_abort()
         "bx r1                                      \n"
         "_prefetch_abort_error_exit:                \n"
     );
+    db<IC>(ERR) << "IC::prefetch_abort" << endl;
     _exit(-1);
 }
 

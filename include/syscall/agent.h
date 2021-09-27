@@ -6,6 +6,8 @@
 #include <architecture.h>
 #include <machine.h>
 #include <syscall/message.h>
+#include <utility/load_app.h>
+
 
 #include <time.h>
 #include <memory.h>
@@ -26,6 +28,9 @@ public:
     }
     void exec() {
         switch(entity()) {
+            case Message::ENTITY::LOADER:
+                handle_loader();
+                break;
             case Message::ENTITY::FORK:
                 handle_fork();
                 break;
@@ -71,6 +76,25 @@ public:
     }
 
 private:
+    void handle_loader() {
+        db<Thread>(TRC) << "*** handle_loader :O ***" << endl;
+        
+        switch(method()) {
+            case Message::LOADER_NEW_APP: {
+                int off_set, res;
+                unsigned int addr;
+                get_params(off_set, addr);
+                res = load_app(off_set, addr);
+                db<Agent>(ERR) << "Fim load app" << endl;
+
+                result(res);
+            } break;
+            default:
+                db<Agent>(ERR) << "ENTITY DEFAULT" << endl;
+                break;
+        }
+    }
+
     void handle_fork() {
         switch(method()) {
             case Message::DO_FORK: {

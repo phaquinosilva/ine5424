@@ -18,6 +18,8 @@ _mcu_start:
         .global _start
         .type   _start, function
 _start:
+        // save context
+        push    {r0-r1}
         // Clear the BSS
         eor     r0, r0
         ldr     r1, =__bss_start__
@@ -39,6 +41,7 @@ __epos_app_entry:
         //mov r12, sp
         //mrs sp, sp_usr
         //msr sp_usr, r12
+        pop     {r0-r1}
         bl      main
         push    {r0}         // save main's return value to be used by exit()
         bl      _fini

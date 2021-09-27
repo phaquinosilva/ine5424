@@ -60,6 +60,8 @@ void CPU::Context::load() const volatile
 // This function assumes A[T]PCS (i.e. "o" is in r0/a0 and "n" is in r1/a1)
 void CPU::switch_context(Context ** o, Context * n)
 {
+    ASM("_switch_matrico:");
+
     // Push the context into the stack and adjust "o" to match
     ASM("       sub     sp, #4                  \n"     // reserve room for PC
         "       push    {r12}                   \n"     // save r12 to use it as a temporary register

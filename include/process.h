@@ -54,6 +54,7 @@ public:
         NORMAL  = Criterion::NORMAL,
         LOW     = Criterion::LOW,
         MAIN    = Criterion::MAIN,
+        LOADER  = Criterion::LOADER,
         IDLE    = Criterion::IDLE
     };
 
@@ -164,6 +165,15 @@ protected:
     }
 
 public:
+    Task(Address_Space * as, Segment * cs, Segment * ds, int (* entry)(), const Log_Addr & code, const Log_Addr & data)
+    : _as(as), _cs(cs), _ds(ds), _entry(entry), _code(code), _data(data) {
+        db<Task, Init>(TRC) << "Task(as=" << _as << ",cs=" << _cs << ",ds=" << _ds << ",entry=" << _entry << ",code=" << _code << ",data=" << _data << ") => " << this << endl;
+        lock();
+        _id = _task_count++;
+        unlock();
+        _main = new (SYSTEM) Thread(Thread::Configuration(Thread::READY, Thread::MAIN, Traits<Application>::STACK_SIZE, this), entry);
+    }
+
     template<typename ... Tn>
     Task(Segment * cs, Segment * ds, int (* entry)(Tn ...), const Log_Addr & code, const Log_Addr & data, Tn ... an)
     : _as (new (SYSTEM) Address_Space), _cs(cs), _ds(ds), _entry(entry), _code(_as->attach(_cs, code)), _data(_as->attach(_ds, data)) {
@@ -284,11 +294,17 @@ inline Thread::Thread(const Configuration & conf, int (* entry)(Tn ...), Tn ... 
         db<Thread>(TRC) << "Context attached at vaddr=" << hex << _context << endl;
     }
     //Log_Addr usp = CPU::init_user_stack(0, _stack + conf.stack_size, &__exit, entry, an ...);
+    // db<Thread>(TRC) << "Before constructor_epilogue, entry:" << entry << endl;
+    // db<Thread>(TRC) << "Before constructor_epilogue, conf.stack_size:" << conf.stack_size << endl;
+    db<Thread>(TRC) << "Before constructor_epilogue, conf.stack_size:" << endl;
     constructor_epilogue(entry, conf.stack_size);
+    db<Thread>(TRC) << "Got out of constructor_epilogue" << endl;
+
     //db<Thread>(TRC) << "------->THREAD USP" << hex << usp << endl;
 
     // Not add Idle in task's threads list
     if (conf.criterion != Thread::IDLE) {
+        db<Thread>(TRC) << "conf.criterion != Thread::IDLE" << hex << _context << endl;
         _task->insert(this);
     }
 }

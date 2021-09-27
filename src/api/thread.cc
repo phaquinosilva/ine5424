@@ -36,13 +36,21 @@ void Thread::constructor_epilogue(Log_Addr entry, unsigned int stack_size)
                     << "},context={b=" << _context
                     << "," << *_context << "}) => " << this << endl;
 
+    db<Thread>(TRC) << endl << "*** my checks ***" << endl;
+    db<Thread>(TRC) << "_state != WAITING =" << (_state != WAITING) << endl;
+    db<Thread>(TRC) << "_state != FINISHING =" << (_state != FINISHING) << endl;
+
     assert((_state != WAITING) && (_state != FINISHING)); // invalid states
 
-    if((_state != READY) && (_state != RUNNING))
+    if((_state != READY) && (_state != RUNNING)) {
+        db<Thread>(TRC) << "*** I am being suspended :O ***" << endl;
         _scheduler.suspend(this);
+    }
 
-    if(preemptive && (_state == READY) && (_link.rank() != IDLE))
+    if(preemptive && (_state == READY) && (_link.rank() != IDLE)) {
+        db<Thread>(TRC) << "*** I am being rescheduled :O ***" << endl;
         reschedule();
+    }
 
     unlock();
 }
@@ -338,6 +346,7 @@ void Thread::dispatch(Thread * prev, Thread * next, bool charge)
 
         db<Thread>(TRC) << "Thread::dispatch(prev=" << prev << ",next=" << next << ")" << endl;
         if(Traits<Thread>::debugged) {
+            db<Thread>(TRC) << "I am being debugged :O" << endl;
             CPU::Context tmp;
             tmp.save();
             db<Thread>(INF) << "Thread::dispatch:prev={" << prev << ",ctx=" << tmp << "}" << endl;
@@ -345,8 +354,11 @@ void Thread::dispatch(Thread * prev, Thread * next, bool charge)
         db<Thread>(INF) << "Thread::dispatch:next={" << next << ",ctx=" << *next->_context << "}" << endl;
 
         if (prev->_task != next->_task) {
+            db<Thread>(TRC) << "I will be activated :O" << endl;
             next->_task->activate_context();
         }
+
+        db<Thread>(TRC) << "I am switching context :O" << endl;
 
         // The non-volatile pointer to volatile pointer to a non-volatile context is correct
         // and necessary because of context switches, but here, we are locked() and
@@ -354,6 +366,8 @@ void Thread::dispatch(Thread * prev, Thread * next, bool charge)
         // disrupting the context (it doesn't make a difference for Intel, which already saves
         // parameters on the stack anyway).
         CPU::switch_context(const_cast<Context **>(&prev->_context), next->_context);
+        db<Thread>(TRC) << "I finished switching context :O" << endl;
+
     }
 }
 
