@@ -74,13 +74,16 @@ int load_app(int off_set, unsigned int addr) {
 
 
     // Address_Space* as = new (SYSTEM) Address_Space(MMU::current());
-    Segment* cs = new (SYSTEM) Segment(Log_Addr(app_code), app_code_size, Segment::Flags::APP);
-    Segment* ds = new (SYSTEM) Segment(Log_Addr(app_data), app_data_size, Segment::Flags::APP);
+    //Segment* cs = new (SYSTEM) Segment(Log_Addr(app_code), app_code_size, Segment::Flags::APP);
+    Segment* cs = new (SYSTEM) Segment(app_code_size, Segment::Flags::APP);
+    //Segment* ds = new (SYSTEM) Segment(Log_Addr(app_data), app_data_size, Segment::Flags::APP);
+    Segment* ds = new (SYSTEM) Segment(app_data_size, Segment::Flags::APP);
 
     // cout << "Attaching data segment..." << endl;
     CPU::int_disable();
     Log_Addr code = Task::self()->address_space()->attach(cs); // o prox endereço eh 0x8020
     Log_Addr data = Task::self()->address_space()->attach(ds); // 0 1 --> 2 3
+    Log_Addr aux_data = data;
     CPU::int_enable();
     
     // aqui eh hora de copiar entao tem que ser igual da task que ta rodando
@@ -100,8 +103,8 @@ int load_app(int off_set, unsigned int addr) {
         data += app_elf->segment_size(i);
     }
 
-    Task::self()->address_space()->detach(cs);
-    Task::self()->address_space()->detach(ds);
+    Task::self()->address_space()->detach(cs, code);
+    Task::self()->address_space()->detach(ds, aux_data);
 
     db<Task>(TRC) << "app_code_size :" << hex << app_code_size << endl;
     db<Task>(TRC) << "app_data_size :" << hex << app_data_size << endl;
