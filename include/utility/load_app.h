@@ -9,10 +9,12 @@
 __BEGIN_UTIL
 
 int load_app(int off_set, unsigned int addr) {
+    ASM("_load_app_matrico: ");
+
     typedef CPU::Log_Addr Log_Addr;
-    db<Task>(ERR) << "********Load_app::off_set(" << off_set << ") ,addr(" << addr << ")********" << endl;
+    db<Thread>(TRC) << "********Load_app::off_set(" << off_set << ") ,addr(" << addr << ")********" << endl;
     unsigned int tamanho = *(reinterpret_cast<int*> (addr + off_set));
-    db<Task>(ERR) << "Tamanho arquivo: " << tamanho << endl;
+    db<Thread>(TRC) << "Tamanho arquivo: " << tamanho << endl;
 
     ELF * app_elf = reinterpret_cast<ELF *>(addr + off_set + 4);
 
@@ -23,9 +25,9 @@ int load_app(int off_set, unsigned int addr) {
     unsigned int app_data_size = 0;
 
     if(!app_elf->valid()) {
-        db<Thread>(ERR) << "APP ELF image is corrupted!" << endl;
+        db<Thread>(TRC) << "APP ELF image is corrupted!" << endl;
     } else {
-        db<Thread>(ERR) << "We good" << endl;
+        db<Thread>(TRC) << "We good" << endl;
     }
 
     entry = app_elf->entry();
@@ -47,7 +49,7 @@ int load_app(int off_set, unsigned int addr) {
 
     // TODO @cross this might be very wrong because app_data never changes
     if(app_data == ~0U) {
-        db<Setup>(WRN) << "APP ELF image has no data segment!" << endl;
+        db<Thread>(TRC) << "APP ELF image has no data segment!" << endl;
         app_data = MMU::align_page(Memory_Map::APP_DATA);
     }
     if(Traits<System>::multiheap) { // Application heap in data segment
@@ -66,8 +68,8 @@ int load_app(int off_set, unsigned int addr) {
 
 
     // Address_Space* as = new (SYSTEM) Address_Space(MMU::current());
-    Segment* cs = new (SYSTEM) Segment(Log_Addr(app_code), app_code_size, Segment::Flags::APPC);
-    Segment* ds = new (SYSTEM) Segment(Log_Addr(app_data), app_data_size, Segment::Flags::APPD);
+    Segment* cs = new (SYSTEM) Segment(Log_Addr(app_code), app_code_size, Segment::Flags::APP);
+    Segment* ds = new (SYSTEM) Segment(Log_Addr(app_data), app_data_size, Segment::Flags::APP);
 
     // cout << "Attaching data segment..." << endl;
     CPU::int_disable();
@@ -104,7 +106,21 @@ int load_app(int off_set, unsigned int addr) {
 
 
     // new (SYSTEM) Task(as, cs, ds, main, code, data);
-    new (SYSTEM) Task(cs, ds, main, code, data);
+    db<Thread>(TRC) << "cs = " << cs << endl;
+    db<Thread>(TRC) << "ds = " << ds << endl;
+    db<Thread>(TRC) << "main = " << main << endl;
+    db<Thread>(TRC) << "code = " << code << endl;
+    db<Thread>(TRC) << "data = " << data << endl;
+    db<Thread>(TRC) << "app_code = " << app_code << endl;
+    db<Thread>(TRC) << "app_data = " << app_data << endl;
+
+
+    new (SYSTEM) Task(  cs, 
+                        ds, 
+                        main, 
+                        code, 
+                        data
+                    );
 
 
     db<Task>(ERR) << "************End::Load_app:************" << endl;

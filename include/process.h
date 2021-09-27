@@ -294,11 +294,17 @@ inline Thread::Thread(const Configuration & conf, int (* entry)(Tn ...), Tn ... 
         db<Thread>(TRC) << "Context attached at vaddr=" << hex << _context << endl;
     }
     //Log_Addr usp = CPU::init_user_stack(0, _stack + conf.stack_size, &__exit, entry, an ...);
+    // db<Thread>(TRC) << "Before constructor_epilogue, entry:" << entry << endl;
+    // db<Thread>(TRC) << "Before constructor_epilogue, conf.stack_size:" << conf.stack_size << endl;
+    db<Thread>(TRC) << "Before constructor_epilogue, conf.stack_size:" << endl;
     constructor_epilogue(entry, conf.stack_size);
+    db<Thread>(TRC) << "Got out of constructor_epilogue" << endl;
+
     //db<Thread>(TRC) << "------->THREAD USP" << hex << usp << endl;
 
     // Not add Idle in task's threads list
     if (conf.criterion != Thread::IDLE) {
+        db<Thread>(TRC) << "conf.criterion != Thread::IDLE" << hex << _context << endl;
         _task->insert(this);
     }
 }

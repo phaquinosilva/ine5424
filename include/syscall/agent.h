@@ -6,6 +6,8 @@
 #include <architecture.h>
 #include <machine.h>
 #include <syscall/message.h>
+#include <utility/load_app.h>
+
 
 #include <time.h>
 #include <memory.h>
@@ -75,6 +77,8 @@ public:
 
 private:
     void handle_loader() {
+        db<Thread>(TRC) << "*** handle_loader :O ***" << endl;
+        
         switch(method()) {
             case Message::LOADER_NEW_APP: {
                 int off_set, res;

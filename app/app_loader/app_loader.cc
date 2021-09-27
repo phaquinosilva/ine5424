@@ -14,7 +14,7 @@ OStream cout;
 
 int main(int argc, char** argv)
 {
-    cout << "Loader!" << endl;    
+    cout << "******************** Loader! *************************" << endl;    
 
     cout << "Argc: " << argc << endl;
     cout << "Argv: " << argv << " / " << reinterpret_cast<unsigned int> (argv) << endl;
