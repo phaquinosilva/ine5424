@@ -56,6 +56,9 @@ public:
         SEGMENT_PHY_ADDRESS,
         SEGMENT_RESIZE,
 
+        SHARED_SEGMENT_GET_SSEG,
+        SHARED_SEGMENT_CREATE,
+        
         MUTEX_CREATE,
         MUTEX_LOCK,
         MUTEX_UNLOCK,
@@ -113,6 +116,7 @@ public:
         TASK,
         ADDRESS_SPACE,
         SEGMENT,
+        SHARED_SEGMENT,
         MUTEX,
         SEMAPHORE,
         CONDITION,
