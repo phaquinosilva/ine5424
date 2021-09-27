@@ -13,6 +13,8 @@
 #include <synchronizer.h>
 #include <time.h>
 #include <utility/fork.h>
+#include <utility/load_app.h>
+
 
 __BEGIN_SYS
 
