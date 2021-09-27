@@ -58,6 +58,7 @@ See also the list of [contributors](https://epos.lisha.ufsc.br/EPOS+Developers) 
 
 This project is licensed under the GPL 2.0 License - see the [LICENSE](LICENSE) file for details
 
+# P5:
 
 ## How to run app_loader
 
@@ -68,11 +69,19 @@ make APPLICATION=app_loader <all optional>
 
 make APPLICATION=app_loader <run / debug>
 
-#### Extras:
+But we've made that available on the execute_app_loader.sh script
 
-- Remember to check if qemu has other processes running sometimes
-    - ps -ef | rg qemu
-    - killall qemu-system-aarch64
+## app_loader status:
 
-- If things are going south remove your previous binaries and start again
-    (there are name clashes)
+We are missing some reference when dispatching the process and our process never returns
+
+```
+Thread::dispatch(prev=0xfea43f28,next=0xfea3bdac)
+Switching Context
+Thread::exit(status=-1) [running=0xfea3bdac]
+Thread::dispatch(prev=0xfea3bdac,next=0xfea43f28)
+```
+
+## IPC status:
+
+Since app_loader isn't working we can't test our solution, but it seems on the right path
