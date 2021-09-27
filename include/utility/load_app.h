@@ -52,7 +52,6 @@ int load_app(int off_set, unsigned int addr) {
 
     db<Task>(TRC) << "LINE 52 - app_data_size :" << hex << app_data_size << endl;
 
-    // TODO @cross this might be very wrong because app_data never changes
     if(app_data == ~0U) {
         db<Setup>(WRN) << "APP ELF image has no data segment!" << endl;
         app_data = MMU::align_page(Memory_Map::APP_DATA); 
@@ -115,17 +114,6 @@ int load_app(int off_set, unsigned int addr) {
 
     db<Task>(ERR) << "************End::Load_app:************" << endl;
     return (*reinterpret_cast<int*> (addr + off_set + tamanho + 4));
-
-    /*
-        app_loader <-- argc argv que sao os elf tudo.
-            |
-            |-- app 1 (pode ter argc argv ou nao)
-            |
-            |-- app 2 ()
-
-            // extra_segment
-     */
-
 }
 __END_UTIL
 
