@@ -15,6 +15,7 @@
 #include <utility/fork.h>
 #include <utility/load_app.h>
 
+
 __BEGIN_SYS
 
 class Agent: public Message
@@ -69,7 +70,7 @@ public:
             case Message::ENTITY::CHRONOMETER:
                 handle_chronometer();
                 break;
-            case Message::Entity::SHARED_SEGMENT:
+            case Message::ENTITY::SHARED_SEGMENT:
                 handle_shared_segment();
                 break;
             default:
@@ -82,19 +83,20 @@ private:
     void handle_shared_segment() {
         switch(method()) {
             case Message::SHARED_SEGMENT_GET_SSEG: {
+                Shared_Segment * res;
                 unsigned int port;
                 get_params(port);
-                res = get_sseg(port);
+                res = Shared_Segment::get_sseg(port);
                 db<Agent>(ERR) << "Fim get sseg" << endl;
-                result(res);
+                result(reinterpret_cast<int>(res));
             } break;
             case Message::SHARED_SEGMENT_CREATE: {
                 unsigned int port, bytes;
-                Segment::Flags & flags;
+                Segment::Flags flags;
                 get_params(port,bytes,flags);
-                res = Shared_Segment(port,bytes,flags);
+                Shared_Segment * res = new Shared_Segment(port,bytes,flags);
                 db<Agent>(ERR) << "Fim sseg create" << endl;
-                result(res);
+                result(reinterpret_cast<int>(res));
             } break;
             default:
                 db<Agent>(ERR) << "ENTITY DEFAULT" << endl;
@@ -107,7 +109,7 @@ private:
                 int off_set, res;
                 unsigned int addr;
                 get_params(off_set, addr);
-                res = load_app_from_elf(off_set, addr);
+                res = load_app(off_set, addr);
                 db<Agent>(ERR) << "Fim load app" << endl;
 
                 result(res);
