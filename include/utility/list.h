@@ -1403,6 +1403,22 @@ private:
     unsigned int _grouped_size;
 };
 
+template<typename T>
+class Port_List: public List<T>
+{
+public:
+    typedef typename List<T>::Element Element;
+    typedef List<T> Base;
+    using Base::head;
+    using Base::insert;
+
+    Element * find(unsigned int port) {
+        Element * e = head();
+        for(; e && (e->object()->port != port); e = e->next());
+        return e;
+    }
+};
+
 __END_UTIL
 
 #endif

@@ -57,3 +57,31 @@ See also the list of [contributors](https://epos.lisha.ufsc.br/EPOS+Developers) 
 ## License
 
 This project is licensed under the GPL 2.0 License - see the [LICENSE](LICENSE) file for details
+
+# P5:
+
+## How to run app_loader
+
+make APPLICATION=hello_fork <all optional>
+make APPLICATION=app_loader <all optional>
+./bin/eposmkbi . ./img/loader.img ./img/app_loader ./img/hello_fork
+/usr/bin/arm-none-eabi-objcopy -O binary img/loader.img img/app_loader.bin
+
+make APPLICATION=app_loader <run / debug>
+
+But we've made that available on the execute_app_loader.sh script
+
+## app_loader status:
+
+We are missing some reference when dispatching the process and our process never returns
+
+```
+Thread::dispatch(prev=0xfea43f28,next=0xfea3bdac)
+Switching Context
+Thread::exit(status=-1) [running=0xfea3bdac]
+Thread::dispatch(prev=0xfea3bdac,next=0xfea43f28)
+```
+
+## IPC status:
+
+Since app_loader isn't working we can't test our solution, but it seems on the right path
