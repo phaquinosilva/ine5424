@@ -41,6 +41,7 @@ public:
         TASK_MAIN,
         TASK_ENTRY,
         TASK_ID,
+        TASK_SELF,
 
         ADDRESS_SPACE_CREATE, 
         ADDRESS_SPACE_CREATE_PD, 

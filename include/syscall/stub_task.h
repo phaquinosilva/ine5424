@@ -8,6 +8,7 @@
 #include <syscall/stub_address_space.h>
 #include <syscall/stub_segment.h>
 #include <memory.h>
+#include <process.h>
 
 __BEGIN_API
 
@@ -17,18 +18,32 @@ class Stub_Task
 {
 private:
     int _id;
+    typedef _SYS::CPU CPU;
     typedef _SYS::Message Message;
     typedef _SYS::Address_Space Address_Space;
     typedef _SYS::Segment Segment;
 
 public:
-    Stub_Task();
+    static Stub_Task * volatile _current;
+
+public:
+    Stub_Task(){}
    
-    template<typename ... Tn>
-    Stub_Task(Stub_Segment * cs, Stub_Segment * ds, int (* entry)(Tn ...), const Address_Space::Log_Addr & code, const Address_Space::Log_Addr & data, Tn ... an){
+    template<typename ... Tn> 
+    Stub_Task(Segment * cs, Segment * ds, int (* entry)(Tn ...), const CPU::Log_Addr & code, const CPU::Log_Addr & data, Tn ... an){
         Message * msg = new Message(0, Message::ENTITY::TASK, Message::TASK_CREATE, cs, ds, entry, code, data);
         msg->act();
         _id = msg->result();
+    }
+
+    static Stub_Task * volatile self() { 
+        Message * msg = new Message(0, Message::ENTITY::TASK, Message::TASK_SELF);
+        msg->act();
+
+        int a = msg->result();
+        _current->set_id(a);
+
+        return _current;
     }
 
     Stub_Address_Space * address_space() {
@@ -40,23 +55,23 @@ public:
         return reinterpret_cast<Stub_Address_Space *>(as);
     }
 
-    Stub_Segment * code_segment() {
-        Message * msg = new Message(_id, Message::ENTITY::TASK, Message::TASK_CODE_SEGMENT);
-        msg->act();
-        int s = msg->result();
-        Stub_Segment * sc = new Stub_Segment();
-        sc->set_id(s);
-        return reinterpret_cast<Stub_Segment *>(sc);
-    }
+    // Stub_Segment * code_segment() {
+    //     Message * msg = new Message(_id, Message::ENTITY::TASK, Message::TASK_CODE_SEGMENT);
+    //     msg->act();
+    //     int s = msg->result();
+    //     Stub_Segment * sc = new Stub_Segment();
+    //     sc->set_id(s);
+    //     return reinterpret_cast<Stub_Segment *>(sc);
+    // }
 
-    Stub_Segment * data_segment() {
-        Message * msg = new Message(_id, Message::ENTITY::TASK, Message::TASK_DATA_SEGMENT);
-        msg->act();
-        int s = msg->result();
-        Stub_Segment * sd = new Stub_Segment();
-        sd->set_id(s);
-        return reinterpret_cast<Stub_Segment *>(sd);
-    }
+    // Stub_Segment * data_segment() {
+    //     Message * msg = new Message(_id, Message::ENTITY::TASK, Message::TASK_DATA_SEGMENT);
+    //     msg->act();
+    //     int s = msg->result();
+    //     Stub_Segment * sd = new Stub_Segment();
+    //     sd->set_id(s);
+    //     return reinterpret_cast<Stub_Segment *>(sd);
+    // }
 
     Address_Space::Log_Addr code() {
         Message * msg = new Message(_id, Message::ENTITY::TASK, Message::TASK_CODE);

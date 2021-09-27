@@ -1,15 +1,15 @@
 // #include <utility/ostream.h>
+#include <memory.h>
+#include <process.h>
 
 #include <syscall/stub_shared_segment.h>
 #include <syscall/stub_segment.h>
-#include <syscall/stub_task.h>
 
 using namespace EPOS;
 
 OStream cout;
 
 typedef long unsigned int Log_Addr;
-typedef long unsigned int Phy_Addr;
 
 int main()
 {
@@ -21,10 +21,7 @@ int main()
     // Shared_Segment * sseg = new Shared_Segment(port, 1024, MMU::Flags::APPD);
     Stub_Shared_Segment * sseg = new Stub_Shared_Segment(port, 1024);
 
-    Phy_Addr phy_addr = sseg->phy_address();
-    cout << "phy_addr_reader=" << phy_addr << endl;
-
-    Log_Addr sseg_log_addr = Stub_Task::active()->address_space()->attach(reinterpret_cast<Stub_Segment *>(sseg));
+    _SYS::CPU::Log_Addr sseg_log_addr = _SYS::Stub_Task::self()->address_space()->attach(reinterpret_cast< Stub_Segment *>(sseg));
     cout << "sseg_log_addr_reader=" << sseg_log_addr << endl;
 
     long unsigned int * a = sseg_log_addr;    
@@ -32,12 +29,12 @@ int main()
 
     char * letters = reinterpret_cast<char *>(a + sizeof(long unsigned int));
     cout << "letters:" << endl;
-    for(int i=0;i<23;i++){
+    for(int i=0;i<24;i++){
         cout << letters[i];
     }
     
     cout << "Reader is finishing" << endl;
-    Stub_Task::active()->address_space()->detach(reinterpret_cast<Stub_Segment *>(sseg));
+    // _SYS::Task::self()->address_space()->detach(reinterpret_cast< _SYS::Segment *>(sseg));
 
     delete sseg; 
 

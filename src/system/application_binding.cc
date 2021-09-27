@@ -7,6 +7,7 @@
 #include <process.h>
 #include <system.h>
 #include <syscall/stub_thread.h>
+// #include <syscall/stub_task.h>
 
 __BEGIN_SYS
 //OStream kout;
@@ -24,6 +25,8 @@ extern "C" {
     //void __cxa_pure_virtual() { db<void>(ERR) << "Pure Virtual method called!" << endl; }
 }
 
+_API::Stub_Task * volatile _API::Stub_Task::_current = new _API::Stub_Task();
+
 __USING_SYS;
 // Bindings
 extern "C" {
@@ -37,4 +40,3 @@ extern "C" {
         msg.act();
     }
 }
-

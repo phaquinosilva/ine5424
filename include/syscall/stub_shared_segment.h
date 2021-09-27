@@ -25,8 +25,8 @@ public:
 
     void set_id(int _id) {id = _id;}
     
-    Stub_Shared_Segment(unsigned int port, unsigned int bytes, const Flags & flags) {
-        Message * msg = new Message(0, Message::ENTITY::SHARED_SEGMENT, Message::SHARED_SEGMENT_CREATE, port, bytes, flags);
+    Stub_Shared_Segment(unsigned int port, unsigned int bytes) {
+        Message * msg = new Message(0, Message::ENTITY::SHARED_SEGMENT, Message::SHARED_SEGMENT_CREATE, port, bytes, _SYS::MMU::Flags::APP);
         msg->act();
         id = msg->result();
     }
@@ -34,7 +34,8 @@ public:
     Shared_Segment * get_sseg(unsigned int port) {
         Message * msg = new Message(0, Message::ENTITY::SHARED_SEGMENT, Message::SHARED_SEGMENT_GET_SSEG, port);
         msg->act();
-        return msg->result();
+        // return msg->result();
+        return reinterpret_cast<Shared_Segment *> (msg->result());
     }
     
 };

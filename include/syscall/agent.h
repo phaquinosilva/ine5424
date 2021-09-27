@@ -100,7 +100,7 @@ private:
                 if (!res) {
                     res = new (SYSTEM) Shared_Segment(port,bytes,flags);
                 }
-                
+
                 db<Agent>(ERR) << "Fim sseg create" << endl;
                 result(reinterpret_cast<int>(res));
             } break;
@@ -264,6 +264,10 @@ private:
                 Task * t = reinterpret_cast<Task *>(id());
                 unsigned int r = t->id();
                 result(r);
+            }   break;
+            case Message::TASK_SELF: {
+                Task * t = Task::self();
+                result(reinterpret_cast<int>(t));
             }   break;
             default:
                 db<Agent>(TRC) << "FAILED :(" << endl;
