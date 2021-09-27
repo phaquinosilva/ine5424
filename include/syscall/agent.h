@@ -94,7 +94,13 @@ private:
                 unsigned int port, bytes;
                 Segment::Flags flags;
                 get_params(port,bytes,flags);
-                Shared_Segment * res = new Shared_Segment(port,bytes,flags);
+
+                Shared_Segment * res = Shared_Segment::get_sseg(port);
+
+                if (!res) {
+                    res = new (SYSTEM) Shared_Segment(port,bytes,flags);
+                }
+                
                 db<Agent>(ERR) << "Fim sseg create" << endl;
                 result(reinterpret_cast<int>(res));
             } break;
